@@ -1,355 +1,286 @@
 ---
 name: docai-convert2md
-description: Use when needing to convert web pages to Markdown format, especially for dynamic content like React apps, social media posts, or academic papers
+description: Use when needing to convert web pages to Markdown format - prioritizes non-Python methods (Jina Reader, Firecrawl) with Python fallback
 ---
 
 # docai:convert2md
 
 ## Overview
 
-This skill helps you convert web page content to Markdown format. It handles static pages, dynamic JavaScript-rendered content, and specialized sources like arXiv papers and social media posts.
+This skill converts web pages to Markdown format using a **priority-based approach**:
 
-**Core principle:** Use the simplest method that works, but always get complete content - even from JavaScript-rendered pages.
+1. **Jina Reader API** (highest priority) - Zero installation, one-line URL
+2. **Firecrawl API** (secondary) - Powerful crawling with API key
+3. **Python implementation** (fallback) - When API methods unavailable
+
+**Core principle:** Use the simplest, fastest method first. Only fall back to Python when non-Python methods fail or aren't available.
 
 **Real-world tested:**
 - ✅ 微信公众号文章 (https://mp.weixin.qq.com/...) - 3395+ characters
-- ✅ arXiv 论文 PDF extraction (https://arxiv.org/abs/...) - 1778+ lines with title
+- ✅ arXiv 论文 PDF extraction (https://arxiv.org/abs/...) - 1778+ lines
 - ✅ 静态博客/文档
-- ✅ X.com/Twitter posts (with browser)
+- ✅ X.com/Twitter posts
 - ✅ Medium/Substack articles
-
-**PDF Support:** Uses PyMuPDF for arXiv papers - extracts title from metadata and full text with page markers.
 
 ## When to Use
 
 - Converting articles for knowledge bases or documentation
 - Archiving web content in readable format
 - Processing academic papers from arXiv
-- Extracting content from social media (X.com, WeChat)
+- Extracting content from social media
 - Creating markdown from any web source
 
 **When NOT to use:**
 - Need structured data extraction (use specialized parsers)
 - Only need page metadata (use simpler tools)
-- Batch processing thousands of pages (consider rate limits)
+- Need to process thousands of pages (consider rate limits)
 
-## How to Use This Skill
+## Priority Methods (No Python Required)
 
-### Option 1: Use the Pre-built Tool (Recommended)
+### Method 1: Jina Reader API ⭐ Recommended
 
-The `tools/convert.py` script handles everything for you:
+**Zero installation, works anywhere:**
+
+```bash
+# Simply prepend r.jina.ai/ to any URL
+https://r.jina.ai/https://example.com/article
+
+# Example:
+curl https://r.jina.ai/https://docs.aws.amazon.com/xxx
+```
+
+**Browser access:**
+Just visit `https://r.jina.ai/https://your-url.com` in browser - get clean Markdown instantly.
+
+**Pros:**
+- ✅ No installation needed
+- ✅ Handles dynamic content (React, Vue, etc.)
+- ✅ Clean, well-formatted output
+- ✅ Free to use
+- ✅ Works with any HTTP client
+
+**Cons:**
+- ❌ Requires internet connection
+- ❌ Rate limits apply
+
+### Method 2: Firecrawl API
+
+**For advanced crawling and structured extraction:**
+
+```bash
+# Install CLI (non-Python)
+curl -sSL https://get.firecrawl.dev | bash
+
+# Basic usage
+firecrawl scrape https://example.com --format markdown
+
+# With API key
+export FIRECRAWL_API_KEY=your_key
+firecrawl scrape https://example.com --format markdown
+```
+
+**API usage:**
+```bash
+curl -X POST https://api.firecrawl.dev/v0/scrape \
+  -H "Authorization: Bearer $FIRECRAWL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "formats": ["markdown"]}'
+```
+
+**Pros:**
+- ✅ Handles complex crawling (multiple pages)
+- ✅ Structured data extraction
+- ✅ JavaScript rendering
+- ✅ Batch processing support
+
+**Cons:**
+- ❌ Requires API key (free tier available)
+- ❌ More complex setup
+
+### Method 3: Browser Extensions
+
+**For manual/one-off conversions:**
+
+- **MarkDownload** (Firefox/Chrome) - One-click Markdown export
+- **SingleFile** - Save complete page as HTML, then convert
+- **Copy as Markdown** - Convert selected content
+
+**Pros:**
+- ✅ No coding required
+- ✅ Works offline
+- ✅ Good for occasional use
+
+**Cons:**
+- ❌ Manual operation
+- ❌ Not automatable
+
+### Method 4: Command-Line Tools
+
+**For automation without Python:**
+
+```bash
+# pandoc (install from https://pandoc.org/)
+curl https://example.com | pandoc -f html -t markdown
+
+# lynx (text browser)
+lynx -dump -nolist https://example.com > output.md
+
+# w3m (text browser)
+w3m -dump https://example.com > output.md
+```
+
+**Pros:**
+- ✅ Fast, local processing
+- ✅ No Python dependency
+- ✅ Scriptable
+
+**Cons:**
+- ❌ Installation required
+- ❌ May not handle dynamic content
+
+## Python Fallback (When Above Methods Fail)
+
+Use when:
+- No internet connection
+- Need custom processing
+- API methods unavailable
+- Need to process local files
+
+### Quick Start
 
 ```bash
 # Install dependencies
-pip install requests beautifulsoup4 markdownify
+cd docai-skills
+uv sync
 
-# Optional: For dynamic pages
-pip install playwright
-playwright install chromium
+# Or install manually
+pip install requests beautifulsoup4 markdownify pymupdf
+```
 
-# Optional: For arXiv PDF extraction
-pip install pymupdf
+### Usage
 
-# Use the tool
+```bash
+# Basic conversion
 python skills/docai-convert2md/tools/convert.py https://example.com
 
 # Save to file
 python skills/docai-convert2md/tools/convert.py https://example.com -o article.md
 
-# Pure text mode
-python skills/docai-convert2md/tools/convert.py https://example.com --pure-text
-
-# Force browser for dynamic content
-python skills/docai-convert2md/tools/convert.py https://x.com/... --use-browser
+# arXiv paper
+python skills/docai-convert2md/tools/convert.py https://arxiv.org/abs/2401.12345
 ```
 
-### Option 2: Use Python Directly
+### Python API
 
 ```python
 from skills.docai_convert2md.tools.convert import WebToMarkdown
 
 converter = WebToMarkdown()
 
-# Basic conversion
+# Auto-detects best method
 markdown = converter.convert("https://example.com")
 
-# With options
-markdown = converter.convert(
-    "https://arxiv.org/abs/2401.12345",
-    pure_text=False,
-    use_browser=None  # Auto-detect
-)
+# Force Python method
+markdown = converter.convert("https://example.com", use_python=True)
 ```
 
-### Option 3: Manual Commands (For Understanding)
+## Decision Flowchart
 
-**For static pages**:
-```bash
-python3 -c "
-import requests
-from bs4 import BeautifulSoup
-from markdownify import markdownify as md
-
-url = 'YOUR_URL_HERE'
-response = requests.get(url, timeout=30)
-soup = BeautifulSoup(response.text, 'html.parser')
-
-for tag in soup(['script', 'style', 'nav', 'footer', 'header']):
-    tag.decompose()
-
-print(md(str(soup)))
-"
+```
+Need to convert URL to Markdown?
+│
+├─ Can use Jina Reader? (internet available)
+│  └─ YES → Use https://r.jina.ai/URL
+│
+├─ Have Firecrawl API key?
+│  └─ YES → Use Firecrawl API
+│
+├─ Can install browser extension?
+│  └─ YES → Use MarkDownload/SingleFile
+│
+├─ Have CLI tools (pandoc/lynx)?
+│  └─ YES → Use command-line
+│
+└─ NO → Use Python implementation
 ```
 
-**For dynamic pages**:
-```bash
-python3 -c "
-from playwright.sync_api import sync_playwright
-from markdownify import markdownify as md
-from bs4 import BeautifulSoup
+## Claude Code Integration
 
-url = 'YOUR_URL_HERE'
-
-with sync_playwright() as p:
-    browser = p.chromium.launch()
-    page = browser.new_page()
-    page.goto(url, wait_until='networkidle')
-    page.wait_for_timeout(2000)
-    html = page.content()
-    browser.close()
-
-soup = BeautifulSoup(html, 'html.parser')
-for tag in soup(['script', 'style', 'nav', 'footer', 'header']):
-    tag.decompose()
-
-print(md(str(soup)))
-"
-```
-
-**For arXiv papers**:
-```bash
-# Convert abstract to PDF URL
-URL="https://arxiv.org/abs/2401.12345"
-PAPER_ID=$(echo $URL | sed 's/.*\///')
-PDF_URL="https://arxiv.org/pdf/${PAPER_ID}.pdf"
-
-# Download and extract (requires PyMuPDF)
-python3 -c "
-import requests, fitz
-response = requests.get('$PDF_URL')
-with open('paper.pdf', 'wb') as f:
-    f.write(response.content)
-doc = fitz.open('paper.pdf')
-text = ''.join(page.get_text() for page in doc)
-print(text)
-"
-```
-
-## Common Workflows
-
-### Workflow 1: Build a Knowledge Base
-
-```bash
-# Create a list of URLs
-cat > urls.txt <<EOF
-https://example.com/article-1
-https://arxiv.org/abs/2401.12345
-https://x.com/user/status/123
-EOF
-
-# Convert all
-mkdir -p knowledge-base
-while read url; do
-    filename=$(echo $url | sed 's/[^a-zA-Z0-9]/_/g')
-    python skills/docai-convert2md/tools/convert.py "$url" \
-        --output "knowledge-base/${filename}.md"
-    sleep 1
-done < urls.txt
-```
-
-### Workflow 2: Research Paper Collection
-
-```bash
-# Convert arXiv papers
-for paper in 2401.12345 2401.67890; do
-    python skills/docai-convert2md/tools/convert.py \
-        "https://arxiv.org/abs/$paper" \
-        --output "papers/paper_$paper.md"
-done
-```
-
-### Workflow 3: Social Media Archive
-
-```bash
-# Archive X.com threads
-python skills/docai-convert2md/tools/convert.py \
-    "https://x.com/OpenAI/status/1700000000000000000" \
-    --use-browser \
-    --output "archive/thread.md"
-```
-
-## Integration with Claude Code
-
-After installing this skill to `~/.claude/skills/`, you can simply ask:
+After installing to `~/.claude/skills/`:
 
 ```
 User: "帮我把 https://example.com 转换成 Markdown"
 
 Claude: (uses this skill)
-1. Analyzes the URL
-2. Determines it's a static page
-3. Uses requests + BeautifulSoup
-4. Cleans HTML and converts to Markdown
-5. Returns the result
+1. Checks if Jina Reader is available
+2. If yes, uses https://r.jina.ai/https://example.com
+3. If no, falls back to Python implementation
+4. Returns clean Markdown
 ```
 
-Or for complex cases:
+## Comparison Table
 
-```
-User: "下载这篇 arXiv 论文并提取主要内容: https://arxiv.org/abs/2401.12345"
-
-Claude: (uses this skill)
-1. Converts URL to PDF
-2. Downloads PDF
-3. Extracts text
-4. Summarizes key sections
-```
-
-## Common Patterns
-
-### Pattern 1: Auto-detect and convert
-```python
-import requests
-from bs4 import BeautifulSoup
-from markdownify import markdownify as md
-from urllib.parse import urlparse
-
-def smart_convert(url):
-    # Check if arXiv
-    if 'arxiv.org' in url and '/abs/' in url:
-        paper_id = url.split('/abs/')[-1]
-        url = f"https://arxiv.org/pdf/{paper_id}.pdf"
-        # Handle PDF...
-        return
-
-    # Check if needs browser
-    dynamic = ['x.com', 'twitter.com', 'medium.com', 'weixin.qq.com']
-    domain = urlparse(url).netloc
-
-    if any(d in domain for d in dynamic):
-        # Use Playwright
-        print(f"Using browser for {domain}")
-    else:
-        # Use requests
-        response = requests.get(url, timeout=30)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        # Clean and convert...
-        return md(str(soup))
-```
-
-### Pattern 2: Batch processing with rate limits
-```python
-import time
-
-urls = [...]  # Your URLs
-
-for url in urls:
-    try:
-        # Convert URL...
-        print(f"✓ {url}")
-    except Exception as e:
-        print(f"✗ {url}: {e}")
-
-    time.sleep(1)  # Be nice to servers
-```
-
-### Pattern 3: Save to files
-```python
-import os
-
-markdown = convert_url(url)  # Your conversion function
-filename = url.split('/')[-1] or 'index'
-
-with open(f"{filename}.md", 'w') as f:
-    f.write(markdown)
-```
+| Method | Installation | Speed | Dynamic Content | Automation | Best For |
+|--------|--------------|-------|-----------------|------------|----------|
+| Jina Reader | None | Fast | ✅ Yes | ✅ Yes | Quick conversion |
+| Firecrawl | API key | Medium | ✅ Yes | ✅ Yes | Complex crawling |
+| Browser Extension | One-click | Fast | ✅ Yes | ❌ No | Manual use |
+| CLI Tools | Required | Fast | ❌ Limited | ✅ Yes | Local processing |
+| Python | Required | Medium | ✅ Yes | ✅ Yes | Custom needs |
 
 ## Common Mistakes
 
-### ❌ Forgetting to install Playwright browsers
+### ❌ Using Python when Jina Reader works
 ```bash
-# Wrong
-pip install playwright
-# Missing: playwright install chromium
+# Wrong (overkill)
+python convert.py https://example.com
 
-# Right
-pip install playwright
-playwright install chromium
+# Right (simple)
+curl https://r.jina.ai/https://example.com
 ```
 
-### ❌ Not handling arXiv correctly
+### ❌ Not checking arXiv PDF format
 ```python
-# Wrong: Trying to parse abstract page
-url = "https://arxiv.org/abs/2401.12345"
-# Gets abstract, not full paper
+# Wrong
+url = "https://arxiv.org/abs/2401.12345"  # Gets abstract only
 
-# Right: Convert to PDF first
-url = "https://arxiv.org/pdf/2401.12345.pdf"
-# Then extract text
+# Right
+url = "https://arxiv.org/pdf/2401.12345.pdf"  # Full paper
 ```
 
 ### ❌ Forgetting PyMuPDF for PDF extraction
 ```bash
-# Wrong: Trying to extract PDF without library
+# Wrong
 python convert.py https://arxiv.org/abs/2401.12345
 # Error: PDF processing requires PyMuPDF
 
-# Right: Install pymupdf first
+# Right
 pip install pymupdf
 python convert.py https://arxiv.org/abs/2401.12345
-# Success: Full paper extracted
-```
-
-### ❌ No timeout handling
-```python
-# Wrong: Can hang forever
-requests.get(url)
-
-# Right: Set timeout
-requests.get(url, timeout=30)
-```
-
-### ❌ Not cleaning HTML
-```python
-# Wrong: Converts everything including ads
-md(html)
-
-# Right: Remove noise first
-soup = BeautifulSoup(html, 'html.parser')
-for tag in soup(['script', 'style', 'nav', 'footer']):
-    tag.decompose()
-md(str(soup))
 ```
 
 ## Testing
 
-Test with these URLs:
+Test URLs:
 
-1. **Static**: `https://example.com`
-2. **Dynamic**: `https://x.com/OpenAI/status/1700000000000000000`
+1. **Jina Reader**: `https://r.jina.ai/https://example.com`
+2. **Static**: `https://example.com`
 3. **arXiv**: `https://arxiv.org/abs/2401.12345`
-4. **Blog**: Any medium.com article
+4. **WeChat**: `https://mp.weixin.qq.com/s/...`
 
 Expected: Clean Markdown with headings, paragraphs, lists preserved.
 
-## Performance Tips
+## Performance
 
-- Static pages: ~1-2 seconds
-- Dynamic pages: ~5-10 seconds
-- arXiv PDFs: ~2-5 seconds
-- Memory: ~100MB for browser mode
+- **Jina Reader**: ~1-2 seconds (API call)
+- **Firecrawl**: ~2-5 seconds (API call)
+- **Python static**: ~1-2 seconds
+- **Python dynamic**: ~5-10 seconds
+- **arXiv PDF**: ~2-5 seconds
 
-For batch processing:
-- Add 1-2 second delays between requests
-- Cache results to avoid re-processing
-- Use parallel processing with rate limits
+## Future Enhancements
+
+- [ ] CLI tool for marketplace management
+- [ ] GitHub integration for skill discovery
+- [ ] More non-Python methods
+- [ ] Batch processing support

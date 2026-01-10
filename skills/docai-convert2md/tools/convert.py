@@ -2,8 +2,10 @@
 """
 Web to Markdown Converter Tool
 
-这是一个独立的工具，可以被 Claude Code skill 调用，
-也可以单独使用来转换网页为 Markdown。
+优先级方法（非Python优先）：
+1. Jina Reader API - 零安装，一行URL转换
+2. Firecrawl API - 需要API密钥
+3. Python实现 - 以上方法失败时的回退
 
 用法:
     python convert.py <url> [--pure-text] [--output <file>]
@@ -21,44 +23,111 @@ from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 from urllib.parse import urlparse
 import re
+import os
 
 
 class WebToMarkdown:
-    """网页转 Markdown 转换器"""
+    """网页转 Markdown 转换器（优先级方法）"""
 
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (compatible; DocAI-Converter/1.0)'
         })
+        # 从环境变量获取 Firecrawl API 密钥
+        self.firecrawl_api_key = os.environ.get('FIRECRAWL_API_KEY')
 
-    def convert(self, url, pure_text=False, use_browser=None):
-        """转换 URL 到 Markdown
+    def convert(self, url, pure_text=False, use_python=False):
+        """转换 URL 到 Markdown（优先级方法）
+
+        优先级：
+        1. Jina Reader API (如果可用)
+        2. Firecrawl API (如果有API密钥)
+        3. Python实现 (回退)
 
         Args:
             url: 网页 URL
             pure_text: 是否返回纯文本（无格式）
-            use_browser: 强制使用浏览器（None=自动检测）
+            use_python: 强制使用Python方法
 
         Returns:
             str: Markdown 或纯文本内容
         """
         url = url.strip()
-        is_pdf = False
 
-        # 处理 arXiv 链接
+        # 处理 arXiv 链接（PDF提取）
         if self._is_arxiv(url):
-            url = self._convert_arxiv_url(url)
-            use_browser = False
-            is_pdf = True
+            return self._handle_arxiv(url, pure_text)
 
-        # 检测 PDF 链接
-        if url.lower().endswith('.pdf'):
-            is_pdf = True
+        # 非Python方法优先（除非强制使用Python）
+        if not use_python:
+            # 方法1: Jina Reader API
+            result = self._try_jina_reader(url, pure_text)
+            if result:
+                return result
+
+            # 方法2: Firecrawl API
+            result = self._try_firecrawl(url, pure_text)
+            if result:
+                return result
+
+        # 方法3: Python实现（回退）
+        return self._python_convert(url, pure_text)
+
+    def _try_jina_reader(self, url, pure_text):
+        """尝试使用 Jina Reader API
+
+        用法: https://r.jina.ai/https://example.com
+        """
+        try:
+            jina_url = f"https://r.jina.ai/{url}"
+            response = self.session.get(jina_url, timeout=15)
+            response.raise_for_status()
+
+            content = response.text
+            if content and len(content.strip()) > 50:  # 验证有内容
+                if pure_text:
+                    return content
+                # Jina 已经返回不错的 Markdown，稍作清理即可
+                return self._clean_jina_markdown(content)
+        except Exception as e:
+            print(f"Jina Reader 失败: {e}", file=sys.stderr)
+        return None
+
+    def _try_firecrawl(self, url, pure_text):
+        """尝试使用 Firecrawl API"""
+        if not self.firecrawl_api_key:
+            print("Firecrawl API 密钥未设置 (FIRECRAWL_API_KEY)", file=sys.stderr)
+            return None
+
+        try:
+            response = self.session.post(
+                "https://api.firecrawl.dev/v0/scrape",
+                headers={"Authorization": f"Bearer {self.firecrawl_api_key}"},
+                json={"url": url, "formats": ["markdown"]},
+                timeout=30
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and data.get('data', {}).get('markdown'):
+                    markdown = data['data']['markdown']
+                    if pure_text:
+                        # 从 Markdown 提取纯文本
+                        return re.sub(r'[\*\#\`\[\]\(\)]', '', markdown)
+                    return markdown
+            else:
+                print(f"Firecrawl 错误: {response.status_code}", file=sys.stderr)
+        except Exception as e:
+            print(f"Firecrawl 失败: {e}", file=sys.stderr)
+        return None
+
+    def _python_convert(self, url, pure_text):
+        """Python实现（回退方法）"""
+        is_pdf = url.lower().endswith('.pdf')
 
         # 自动检测是否需要浏览器
-        if use_browser is None:
-            use_browser = self._needs_browser(url)
+        use_browser = self._needs_browser(url)
 
         if use_browser:
             content = self._get_with_playwright(url)
@@ -70,18 +139,42 @@ class WebToMarkdown:
             if pure_text:
                 return self._extract_pdf_text(content)
             else:
-                # PDF 转 Markdown（带标题）
                 title = self._extract_pdf_title(content)
                 text = self._extract_pdf_text(content)
                 if title:
-                    return f"# {title}\n\n{text}"
+                    return f"# {title}\\n\\n{text}"
                 return text
 
-        # 转换格式
+        # HTML 转换
         if pure_text:
             return self._to_plain_text(content)
         else:
             return self._to_markdown(content)
+
+    def _handle_arxiv(self, url, pure_text):
+        """处理 arXiv 论文（PDF提取）"""
+        pdf_url = self._convert_arxiv_url(url)
+        try:
+            pdf_content = self._get_with_requests(pdf_url)
+            if pure_text:
+                return self._extract_pdf_text(pdf_content)
+            else:
+                title = self._extract_pdf_title(pdf_content)
+                text = self._extract_pdf_text(pdf_content)
+                if title:
+                    return f"# {title}\\n\\n{text}"
+                return text
+        except Exception as e:
+            print(f"arXiv PDF 下载失败: {e}", file=sys.stderr)
+            return None
+
+    def _clean_jina_markdown(self, markdown):
+        """清理 Jina Reader 返回的 Markdown"""
+        # 移除多余的空行
+        markdown = re.sub(r'\\n{3,}', '\\n\\n', markdown)
+        # 移除行尾空格
+        markdown = re.sub(r' +\\n', '\\n', markdown)
+        return markdown.strip()
 
     def _is_arxiv(self, url):
         """检测是否为 arXiv 链接"""
@@ -164,7 +257,7 @@ class WebToMarkdown:
                 first_page = doc[0]
                 text = first_page.get_text()
                 # 取前几行作为标题候选
-                lines = [line.strip() for line in text.split('\n') if line.strip()]
+                lines = [line.strip() for line in text.split('\\n') if line.strip()]
                 if lines:
                     # 通常标题是第一行或前两行
                     return ' '.join(lines[:2])
@@ -188,8 +281,8 @@ class WebToMarkdown:
             for page_num, page in enumerate(doc):
                 page_text = page.get_text()
                 if page_text.strip():
-                    text += f"--- Page {page_num + 1} ---\n\n"
-                    text += page_text + "\n\n"
+                    text += f"--- Page {page_num + 1} ---\\n\\n"
+                    text += page_text + "\\n\\n"
             return text.strip()
         except Exception as e:
             raise Exception(f"PDF 文本提取失败: {e}")
@@ -289,7 +382,7 @@ class WebToMarkdown:
 
         # 构建最终内容
         if title:
-            markdown = f"# {title}\n\n"
+            markdown = f"# {title}\\n\\n"
         else:
             markdown = ""
 
@@ -297,8 +390,8 @@ class WebToMarkdown:
         markdown += md(cleaned_html, heading_style="ATX")
 
         # 清理多余空白
-        markdown = re.sub(r'\n{3,}', '\n\n', markdown)
-        markdown = re.sub(r' +\n', '\n', markdown)  # 行尾空格
+        markdown = re.sub(r'\\n{3,}', '\\n\\n', markdown)
+        markdown = re.sub(r' +\\n', '\\n', markdown)  # 行尾空格
 
         return markdown.strip()
 
@@ -311,9 +404,9 @@ class WebToMarkdown:
         for tag in main(['script', 'style', 'nav', 'footer', 'header', 'aside']):
             tag.decompose()
 
-        text = main.get_text(separator='\n\n', strip=True)
+        text = main.get_text(separator='\\n\\n', strip=True)
 
-        text = re.sub(r'\n{3,}', '\n\n', text)
+        text = re.sub(r'\\n{3,}', '\\n\\n', text)
 
         return text.strip()
 
@@ -321,22 +414,26 @@ class WebToMarkdown:
 def main():
     """命令行入口"""
     parser = argparse.ArgumentParser(
-        description='将网页转换为 Markdown 格式',
+        description='将网页转换为 Markdown 格式（优先使用非Python方法）',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='''
+        epilog='''优先级方法:
+  1. Jina Reader API (https://r.jina.ai/URL) - 零安装
+  2. Firecrawl API (需要 FIRECRAWL_API_KEY)
+  3. Python实现 (回退)
+
 示例:
   %(prog)s https://example.com
   %(prog)s https://arxiv.org/abs/2401.12345 --output paper.md
   %(prog)s https://x.com/user/status/123 --pure-text
-  %(prog)s https://example.com --use-browser
+  %(prog)s https://example.com --use-python  # 强制使用Python方法
         '''
     )
 
     parser.add_argument('url', help='要转换的网页 URL')
     parser.add_argument('--pure-text', action='store_true',
                        help='输出纯文本（无 Markdown 格式）')
-    parser.add_argument('--use-browser', action='store_true',
-                       help='强制使用浏览器（即使可能是静态页面）')
+    parser.add_argument('--use-python', action='store_true',
+                       help='强制使用Python方法（跳过Jina/Firecrawl）')
     parser.add_argument('--output', '-o', help='输出到文件')
 
     args = parser.parse_args()
@@ -346,8 +443,12 @@ def main():
         result = converter.convert(
             args.url,
             pure_text=args.pure_text,
-            use_browser=args.use_browser
+            use_python=args.use_python
         )
+
+        if result is None:
+            print("✗ 转换失败：所有方法均不可用", file=sys.stderr)
+            sys.exit(1)
 
         if args.output:
             with open(args.output, 'w', encoding='utf-8') as f:

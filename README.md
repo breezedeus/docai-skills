@@ -2,6 +2,8 @@
 
 一个专注于文档 AI 相关技能的 marketplace，为 Claude Code 提供各种文档处理技能。
 
+**核心理念：优先使用非Python方法，Python作为回退**
+
 ## 项目结构
 
 ```
@@ -10,7 +12,7 @@ docai-skills/
 │   └── docai-convert2md/           # 网页转 Markdown skill
 │       ├── SKILL.md                # ⭐ Skill 定义（Claude Code 使用）
 │       └── tools/                  # 可选：工具脚本
-│           ├── convert.py          # 转换工具（可执行）
+│           ├── convert.py          # 转换工具（优先级架构）
 │           └── README.md           # 工具文档
 ├── pyproject.toml                  # 项目配置
 └── README.md                       # 本文件
@@ -25,7 +27,7 @@ cd docai-skills
 uv sync
 ```
 
-### 2. 安装 Playwright 浏览器
+### 2. 安装 Playwright 浏览器（Python回退方法）
 
 ```bash
 playwright install chromium
@@ -34,37 +36,105 @@ playwright install chromium
 ### 3. 测试第一个 Skill
 
 ```bash
-# 使用转换工具
+# 使用转换工具（自动优先级：Jina Reader → Firecrawl → Python）
 uv run python skills/docai-convert2md/tools/convert.py https://example.com
 
 # 测试微信公众号（已验证成功）
 uv run python skills/docai-convert2md/tools/convert.py https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA
+
+# 测试 arXiv 论文（PDF提取）
+uv run python skills/docai-convert2md/tools/convert.py https://arxiv.org/abs/2401.12345
 ```
+
+## 优先级方法
+
+### 1. Jina Reader API ⭐ 推荐
+
+**零安装，一行URL转换：**
+
+```bash
+# 浏览器直接访问
+https://r.jina.ai/https://example.com
+
+# 或使用 curl
+curl https://r.jina.ai/https://example.com
+
+# Python 工具自动使用
+python skills/docai-convert2md/tools/convert.py https://example.com
+```
+
+**优点：**
+- ✅ 零安装，无需配置
+- ✅ 速度快（~1-2秒）
+- ✅ 处理动态内容（React/Vue等）
+- ✅ 免费使用
+
+### 2. Firecrawl API
+
+**需要API密钥，功能强大：**
+
+```bash
+# 设置环境变量
+export FIRECRAWL_API_KEY=your_key
+
+# Python 工具自动使用
+python skills/docai-convert2md/tools/convert.py https://example.com
+```
+
+**优点：**
+- ✅ 复杂爬虫支持
+- ✅ 结构化数据提取
+- ✅ JavaScript渲染
+- ✅ 批量处理
+
+### 3. Python实现
+
+**以上方法失败时的回退：**
+
+```bash
+# 强制使用Python方法
+python skills/docai-convert2md/tools/convert.py https://example.com --use-python
+```
+
+**支持：**
+- ✅ 静态页面
+- ✅ 动态页面（Playwright）
+- ✅ arXiv PDF提取
+- ✅ 微信公众号
+- ✅ 社交媒体
 
 ## 已实现的 Skills
 
-### docai:convert2md - 网页转 Markdown
+### docai:convert2md - 网页转 Markdown（优先级架构）
 
-**功能：**
-- ✅ 静态页面转换
+**核心特性：优先使用非Python方法，Python作为回退**
+
+**优先级方法：**
+1. **Jina Reader API** - 零安装，一行URL转换
+2. **Firecrawl API** - 需要API密钥，功能强大
+3. **Python实现** - 以上方法失败时的回退
+
+**支持场景：**
+- ✅ 静态页面（博客、文档）
 - ✅ 动态页面（React/Vue SPA）
 - ✅ 社交媒体（X.com, Twitter）
 - ✅ 微信公众号文章
-- ✅ arXiv 论文
+- ✅ arXiv 论文（PDF提取）
 - ✅ 纯文本模式
 
 **使用示例：**
 ```bash
-# 命令行使用
+# 自动优先级方法（推荐）
 python skills/docai-convert2md/tools/convert.py https://example.com -o output.md
 
-# Python API
-from skills.docai_convert2md.tools.convert import WebToMarkdown
-converter = WebToMarkdown()
-markdown = converter.convert("https://example.com/article")
+# 强制使用Python方法
+python skills/docai-convert2md/tools/convert.py https://example.com --use-python
+
+# Jina Reader 直接使用（无需Python）
+curl https://r.jina.ai/https://example.com
 ```
 
-**测试结果：** 已验证成功处理微信公众号、arXiv 论文、静态页面
+**测试结果：** 已验证成功处理各类内容
 - ✅ 微信公众号：https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA (3395 字符)
 - ✅ arXiv 论文：https://arxiv.org/abs/2401.12345 (完整论文提取)
 - ✅ arXiv PDF提取：http://arxiv.org/abs/2601.04500v1 (1778行，带标题)
