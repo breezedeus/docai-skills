@@ -2,6 +2,29 @@
 
 一个专注于文档 AI 相关技能的 Claude Code Skill 集合。
 
+## 作为 Marketplace 安装
+
+### 方式 1: 通过 Marketplace（推荐）
+
+```bash
+# 从 GitHub 安装
+/plugin marketplace add breezedeus/docai-skills
+```
+
+### 方式 2: 手动安装
+
+```bash
+# 复制到 Claude Code 目录
+cp -r skills/docai-convert2md ~/.claude/skills/
+```
+
+### 方式 3: 本地开发安装
+
+```bash
+# 克隆仓库后，从本地路径安装
+/plugin marketplace add /path/to/docai-skills
+```
+
 ## 已实现的 Skills
 
 ### docai:convert2md - 网页转 Markdown
@@ -16,12 +39,8 @@
 - arXiv 论文
 - 纯文本模式
 
-**安装：**
+**安装 Python 依赖（仅用于回退方法）：**
 ```bash
-# 复制到 Claude Code 目录
-cp -r skills/docai-convert2md ~/.claude/skills/
-
-# 安装 Python 依赖（仅用于回退方法）
 pip install requests beautifulsoup4 markdownify pymupdf
 ```
 
