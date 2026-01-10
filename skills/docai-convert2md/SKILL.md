@@ -43,14 +43,14 @@ This skill converts web pages to Markdown format using a **priority-based approa
 
 ```bash
 # Simply prepend r.jina.ai/ to any URL
-https://r.jina.ai/https://example.com/article
+https://r.jina.ai/https://www.breezedeus.com/article/ai-agent-context-engineering
 
 # Example:
-curl https://r.jina.ai/https://docs.aws.amazon.com/xxx
+curl https://r.jina.ai/https://www.breezedeus.com/article/ai-agent-context-engineering
 ```
 
 **Browser access:**
-Just visit `https://r.jina.ai/https://your-url.com` in browser - get clean Markdown instantly.
+Just visit `https://r.jina.ai/https://www.breezedeus.com/article/ai-agent-context-engineering` in browser - get clean Markdown instantly.
 
 **Pros:**
 - ✅ No installation needed
@@ -72,11 +72,11 @@ Just visit `https://r.jina.ai/https://your-url.com` in browser - get clean Markd
 curl -sSL https://get.firecrawl.dev | bash
 
 # Basic usage
-firecrawl scrape https://example.com --format markdown
+firecrawl scrape https://www.breezedeus.com/article/ai-agent-context-engineering --format markdown
 
 # With API key
 export FIRECRAWL_API_KEY=your_key
-firecrawl scrape https://example.com --format markdown
+firecrawl scrape https://www.breezedeus.com/article/ai-agent-context-engineering --format markdown
 ```
 
 **API usage:**
@@ -84,7 +84,7 @@ firecrawl scrape https://example.com --format markdown
 curl -X POST https://api.firecrawl.dev/v0/scrape \
   -H "Authorization: Bearer $FIRECRAWL_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com", "formats": ["markdown"]}'
+  -d '{"url": "https://www.breezedeus.com/article/ai-agent-context-engineering", "formats": ["markdown"]}'
 ```
 
 **Pros:**
@@ -120,13 +120,13 @@ curl -X POST https://api.firecrawl.dev/v0/scrape \
 
 ```bash
 # pandoc (install from https://pandoc.org/)
-curl https://example.com | pandoc -f html -t markdown
+curl https://www.breezedeus.com/article/ai-agent-context-engineering | pandoc -f html -t markdown
 
 # lynx (text browser)
-lynx -dump -nolist https://example.com > output.md
+lynx -dump -nolist https://www.breezedeus.com/article/ai-agent-context-engineering > output.md
 
 # w3m (text browser)
-w3m -dump https://example.com > output.md
+w3m -dump https://www.breezedeus.com/article/ai-agent-context-engineering > output.md
 ```
 
 **Pros:**
@@ -161,13 +161,13 @@ pip install requests beautifulsoup4 markdownify pymupdf
 
 ```bash
 # Basic conversion
-python skills/docai-convert2md/tools/convert.py https://example.com
+python skills/docai-convert2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
 
 # Save to file
-python skills/docai-convert2md/tools/convert.py https://example.com -o article.md
+python skills/docai-convert2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering -o article.md
 
 # arXiv paper
-python skills/docai-convert2md/tools/convert.py https://arxiv.org/abs/2401.12345
+python skills/docai-convert2md/tools/convert.py https://arxiv.org/abs/2601.04500v1
 ```
 
 ### Python API
@@ -178,16 +178,19 @@ from skills.docai_convert2md.tools.convert import WebToMarkdown
 converter = WebToMarkdown()
 
 # Auto-detects best method
-markdown = converter.convert("https://example.com")
+markdown = converter.convert("https://www.breezedeus.com/article/ai-agent-context-engineering")
 
 # Force Python method
-markdown = converter.convert("https://example.com", use_python=True)
+markdown = converter.convert("https://www.breezedeus.com/article/ai-agent-context-engineering", use_python=True)
 ```
 
 ## Decision Flowchart
 
 ```
 Need to convert URL to Markdown?
+│
+├─ Is it arXiv? (arxiv.org)
+│  └─ YES → Convert to HTML URL first
 │
 ├─ Can use Jina Reader? (internet available)
 │  └─ YES → Use https://r.jina.ai/URL
@@ -202,6 +205,7 @@ Need to convert URL to Markdown?
 │  └─ YES → Use command-line
 │
 └─ NO → Use Python implementation
+    └─ arXiv HTML? → Download PDF and extract
 ```
 
 ## Claude Code Integration
@@ -209,11 +213,11 @@ Need to convert URL to Markdown?
 After installing to `~/.claude/skills/`:
 
 ```
-User: "帮我把 https://example.com 转换成 Markdown"
+User: "帮我把 https://www.breezedeus.com/article/ai-agent-context-engineering 转换成 Markdown"
 
 Claude: (uses this skill)
 1. Checks if Jina Reader is available
-2. If yes, uses https://r.jina.ai/https://example.com
+2. If yes, uses https://r.jina.ai/https://www.breezedeus.com/article/ai-agent-context-engineering
 3. If no, falls back to Python implementation
 4. Returns clean Markdown
 ```
@@ -228,45 +232,51 @@ Claude: (uses this skill)
 | CLI Tools | Required | Fast | ❌ Limited | ✅ Yes | Local processing |
 | Python | Required | Medium | ✅ Yes | ✅ Yes | Custom needs |
 
+**arXiv Special Handling:**
+- Priority: HTML URL → Jina Reader → PDF fallback
+- Example: `https://arxiv.org/abs/2601.04500v1` → `https://arxiv.org/html/2601.04500v1` → Jina
+
 ## Common Mistakes
 
 ### ❌ Using Python when Jina Reader works
 ```bash
 # Wrong (overkill)
-python convert.py https://example.com
+python convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
 
 # Right (simple)
-curl https://r.jina.ai/https://example.com
+curl https://r.jina.ai/https://www.breezedeus.com/article/ai-agent-context-engineering
 ```
 
-### ❌ Not checking arXiv PDF format
+### ❌ Not using arXiv HTML priority
 ```python
-# Wrong
-url = "https://arxiv.org/abs/2401.12345"  # Gets abstract only
+# Wrong - goes directly to PDF
+url = "https://arxiv.org/pdf/2601.04500v1.pdf"
 
-# Right
-url = "https://arxiv.org/pdf/2401.12345.pdf"  # Full paper
+# Right - HTML first, PDF fallback
+url = "https://arxiv.org/abs/2601.04500v1"
+# Skill auto-converts to: https://arxiv.org/html/2601.04500v1
+# Then falls back to PDF if needed
 ```
 
 ### ❌ Forgetting PyMuPDF for PDF extraction
 ```bash
 # Wrong
-python convert.py https://arxiv.org/abs/2401.12345
+python convert.py https://arxiv.org/abs/2601.04500v1
 # Error: PDF processing requires PyMuPDF
 
 # Right
 pip install pymupdf
-python convert.py https://arxiv.org/abs/2401.12345
+python convert.py https://arxiv.org/abs/2601.04500v1
 ```
 
 ## Testing
 
 Test URLs:
 
-1. **Jina Reader**: `https://r.jina.ai/https://example.com`
-2. **Static**: `https://example.com`
-3. **arXiv**: `https://arxiv.org/abs/2401.12345`
-4. **WeChat**: `https://mp.weixin.qq.com/s/...`
+1. **Jina Reader**: `https://r.jina.ai/https://www.breezedeus.com/article/ai-agent-context-engineering`
+2. **Static**: `https://www.breezedeus.com/article/ai-agent-context-engineering`
+3. **arXiv**: `https://arxiv.org/abs/2601.04500v1`
+4. **WeChat**: `https://mp.weixin.qq.com/s/1LfkYdbzymoWxdvdnKeLnA`
 
 Expected: Clean Markdown with headings, paragraphs, lists preserved.
 
@@ -276,7 +286,8 @@ Expected: Clean Markdown with headings, paragraphs, lists preserved.
 - **Firecrawl**: ~2-5 seconds (API call)
 - **Python static**: ~1-2 seconds
 - **Python dynamic**: ~5-10 seconds
-- **arXiv PDF**: ~2-5 seconds
+- **arXiv HTML**: ~1-2 seconds (via Jina)
+- **arXiv PDF**: ~2-5 seconds (Python fallback)
 
 ## Future Enhancements
 
@@ -284,3 +295,4 @@ Expected: Clean Markdown with headings, paragraphs, lists preserved.
 - [ ] GitHub integration for skill discovery
 - [ ] More non-Python methods
 - [ ] Batch processing support
+- [ ] arXiv HTML version detection (auto-fallback if no HTML)

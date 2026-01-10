@@ -7,12 +7,17 @@ Web to Markdown Converter Tool
 2. Firecrawl API - 需要API密钥
 3. Python实现 - 以上方法失败时的回退
 
+arXiv 特殊处理：
+- 输入: https://arxiv.org/abs/2601.04500v1
+- 转换为: https://arxiv.org/html/2601.04500v1
+- 优先 Jina Reader，失败则 Python 下载 PDF
+
 用法:
     python convert.py <url> [--pure-text] [--output <file>]
 
 示例:
-    python convert.py https://example.com
-    python convert.py https://arxiv.org/abs/2401.12345 --output paper.md
+    python convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
+    python convert.py https://arxiv.org/abs/2601.04500v1 --output paper.md
     python convert.py https://x.com/user/status/123 --pure-text
 """
 
@@ -81,7 +86,7 @@ class WebToMarkdown:
     def _try_jina_reader(self, url, pure_text):
         """尝试使用 Jina Reader API
 
-        用法: https://r.jina.ai/https://example.com
+        用法: https://r.jina.ai/https://www.breezedeus.com/article/ai-agent-context-engineering
         """
         try:
             jina_url = f"https://r.jina.ai/{url}"
@@ -443,10 +448,10 @@ def main():
   3. Python实现 (回退)
 
 示例:
-  %(prog)s https://example.com
-  %(prog)s https://arxiv.org/abs/2401.12345 --output paper.md
+  %(prog)s https://www.breezedeus.com/article/ai-agent-context-engineering
+  %(prog)s https://arxiv.org/abs/2601.04500v1 --output paper.md
   %(prog)s https://x.com/user/status/123 --pure-text
-  %(prog)s https://example.com --use-python  # 强制使用Python方法
+  %(prog)s https://www.breezedeus.com/article/ai-agent-context-engineering --use-python  # 强制使用Python方法
         '''
     )
 

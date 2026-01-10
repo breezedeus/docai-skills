@@ -145,7 +145,7 @@ marketplace install docai-convert2md
 
 在 Claude Code 中：
 ```
-用户: "帮我把 https://example.com 转换成 Markdown"
+用户: "帮我把 https://breezedeus.com 转换成 Markdown"
 
 Claude: (读取 docai-convert2md SKILL.md)
 1. 分析 URL 类型
@@ -160,7 +160,7 @@ Claude: (读取 docai-convert2md SKILL.md)
 ```markdown
 ## Testing
 Test with:
-1. Static page: https://example.com
+1. Static page: https://breezedeus.com
 2. Dynamic page: https://x.com/...
 3. arXiv: https://arxiv.org/abs/...
 ```
@@ -210,10 +210,10 @@ Converts web pages to Markdown.
 cp -r skills/docai-convert2md ~/.claude/skills/
 
 # 在 Claude Code 中测试
-# 输入: "帮我把 https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA 转换成 Markdown"
+# 输入: "帮我把 https://mp.weixin.qq.com/s/1LfkYdbzymoWxdvdnKeLnA 转换成 Markdown"
 
 # 或独立测试工具
-uv run python skills/docai-convert2md/tools/convert.py https://example.com
+uv run python skills/docai-convert2md/tools/convert.py https://breezedeus.com
 ```
 
 ### 2. 添加更多 Skills
