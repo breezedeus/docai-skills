@@ -55,9 +55,9 @@ class WebToMarkdown:
         """
         url = url.strip()
 
-        # 处理 arXiv 链接（PDF提取）
+        # arXiv 特殊处理：转换为 HTML URL
         if self._is_arxiv(url):
-            return self._handle_arxiv(url, pure_text)
+            url = self._convert_arxiv_to_html(url)
 
         # 非Python方法优先（除非强制使用Python）
         if not use_python:
@@ -72,6 +72,10 @@ class WebToMarkdown:
                 return result
 
         # 方法3: Python实现（回退）
+        # 如果是 arXiv HTML URL，回退时尝试 PDF
+        if self._is_arxiv(url):
+            return self._handle_arxiv(url, pure_text)
+
         return self._python_convert(url, pure_text)
 
     def _try_jina_reader(self, url, pure_text):
@@ -142,7 +146,7 @@ class WebToMarkdown:
                 title = self._extract_pdf_title(content)
                 text = self._extract_pdf_text(content)
                 if title:
-                    return f"# {title}\\n\\n{text}"
+                    return f"# {title}\n\n{text}"
                 return text
 
         # HTML 转换
@@ -152,38 +156,55 @@ class WebToMarkdown:
             return self._to_markdown(content)
 
     def _handle_arxiv(self, url, pure_text):
-        """处理 arXiv 论文（PDF提取）"""
-        pdf_url = self._convert_arxiv_url(url)
+        """arXiv Python回退方法：从HTML URL转为PDF下载"""
+        # 此时 url 是 arXiv HTML URL
         try:
+            # 转换为 PDF URL
+            pdf_url = self._convert_arxiv_to_pdf(url)
+            print(f"arXiv Python回退: 下载PDF {pdf_url}", file=sys.stderr)
             pdf_content = self._get_with_requests(pdf_url)
+
             if pure_text:
                 return self._extract_pdf_text(pdf_content)
             else:
                 title = self._extract_pdf_title(pdf_content)
                 text = self._extract_pdf_text(pdf_content)
                 if title:
-                    return f"# {title}\\n\\n{text}"
+                    return f"# {title}\n\n{text}"
                 return text
         except Exception as e:
-            print(f"arXiv PDF 下载失败: {e}", file=sys.stderr)
+            print(f"arXiv PDF失败: {e}", file=sys.stderr)
             return None
 
     def _clean_jina_markdown(self, markdown):
         """清理 Jina Reader 返回的 Markdown"""
         # 移除多余的空行
-        markdown = re.sub(r'\\n{3,}', '\\n\\n', markdown)
+        markdown = re.sub(r'\n{3,}', '\n\n', markdown)
         # 移除行尾空格
-        markdown = re.sub(r' +\\n', '\\n', markdown)
+        markdown = re.sub(r' +\n', '\n', markdown)
         return markdown.strip()
 
     def _is_arxiv(self, url):
         """检测是否为 arXiv 链接"""
-        return 'arxiv.org' in url and ('/abs/' in url or '/pdf/' in url)
+        return 'arxiv.org' in url and ('/abs/' in url or '/pdf/' in url or '/html/' in url)
 
-    def _convert_arxiv_url(self, url):
+    def _convert_arxiv_to_html(self, url):
+        """转换 arXiv 链接为 HTML URL"""
+        if '/html/' in url:
+            return url
+        if '/pdf/' in url:
+            paper_id = url.split('/pdf/')[-1].split('?')[0].replace('.pdf', '')
+            return f"https://arxiv.org/html/{paper_id}"
+        paper_id = url.split('/abs/')[-1].split('?')[0]
+        return f"https://arxiv.org/html/{paper_id}"
+
+    def _convert_arxiv_to_pdf(self, url):
         """转换 arXiv 链接为 PDF URL"""
         if '/pdf/' in url:
             return url
+        if '/html/' in url:
+            paper_id = url.split('/html/')[-1].split('?')[0]
+            return f"https://arxiv.org/pdf/{paper_id}.pdf"
         paper_id = url.split('/abs/')[-1].split('?')[0]
         return f"https://arxiv.org/pdf/{paper_id}.pdf"
 
@@ -257,7 +278,7 @@ class WebToMarkdown:
                 first_page = doc[0]
                 text = first_page.get_text()
                 # 取前几行作为标题候选
-                lines = [line.strip() for line in text.split('\\n') if line.strip()]
+                lines = [line.strip() for line in text.split('\n') if line.strip()]
                 if lines:
                     # 通常标题是第一行或前两行
                     return ' '.join(lines[:2])
@@ -281,8 +302,8 @@ class WebToMarkdown:
             for page_num, page in enumerate(doc):
                 page_text = page.get_text()
                 if page_text.strip():
-                    text += f"--- Page {page_num + 1} ---\\n\\n"
-                    text += page_text + "\\n\\n"
+                    text += f"--- Page {page_num + 1} ---\n\n"
+                    text += page_text + "\n\n"
             return text.strip()
         except Exception as e:
             raise Exception(f"PDF 文本提取失败: {e}")
@@ -382,7 +403,7 @@ class WebToMarkdown:
 
         # 构建最终内容
         if title:
-            markdown = f"# {title}\\n\\n"
+            markdown = f"# {title}\n\n"
         else:
             markdown = ""
 
@@ -390,8 +411,8 @@ class WebToMarkdown:
         markdown += md(cleaned_html, heading_style="ATX")
 
         # 清理多余空白
-        markdown = re.sub(r'\\n{3,}', '\\n\\n', markdown)
-        markdown = re.sub(r' +\\n', '\\n', markdown)  # 行尾空格
+        markdown = re.sub(r'\n{3,}', '\n\n', markdown)
+        markdown = re.sub(r' +\n', '\n', markdown)  # 行尾空格
 
         return markdown.strip()
 
@@ -404,9 +425,9 @@ class WebToMarkdown:
         for tag in main(['script', 'style', 'nav', 'footer', 'header', 'aside']):
             tag.decompose()
 
-        text = main.get_text(separator='\\n\\n', strip=True)
+        text = main.get_text(separator='\n\n', strip=True)
 
-        text = re.sub(r'\\n{3,}', '\\n\\n', text)
+        text = re.sub(r'\n{3,}', '\n\n', text)
 
         return text.strip()
 

@@ -112,7 +112,7 @@ paper = converter.convert("https://arxiv.org/abs/2401.12345")
 
 ✅ **特殊处理**
 - 微信公众号（移动 UA）
-- arXiv 论文（PDF提取）
+- arXiv 论文（优先HTML，回退PDF）
 - X.com/Twitter
 - Medium/Substack
 
@@ -127,7 +127,8 @@ paper = converter.convert("https://arxiv.org/abs/2401.12345")
 - **Firecrawl**: ~2-5 秒（API调用）
 - **Python静态**: ~1-2 秒
 - **Python动态**: ~5-10 秒
-- **arXiv PDF**: ~2-5 秒
+- **arXiv HTML**: ~1-3 秒 (优先)
+- **arXiv PDF**: ~2-5 秒 (回退)
 
 ## 常见问题
 

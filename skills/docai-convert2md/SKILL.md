@@ -17,7 +17,7 @@ This skill converts web pages to Markdown format using a **priority-based approa
 
 **Real-world tested:**
 - ✅ 微信公众号文章 (https://mp.weixin.qq.com/...) - 3395+ characters
-- ✅ arXiv 论文 PDF extraction (https://arxiv.org/abs/...) - 1778+ lines
+- ✅ arXiv 论文 (优先HTML，回退PDF) (https://arxiv.org/abs/...) - 完整提取
 - ✅ 静态博客/文档
 - ✅ X.com/Twitter posts
 - ✅ Medium/Substack articles
