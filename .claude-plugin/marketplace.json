@@ -1,17 +1,22 @@
 {
   "name": "breezedeus/docai-skills",
-  "displayName": "DocAI Skills",
-  "description": "Document AI related skills for Claude Code - web to markdown conversion, PDF extraction, OCR, and more",
-  "version": "1.0.0",
-  "author": "breezedeus",
-  "repository": "https://github.com/breezedeus/docai-skills",
-  "skills": [
+  "owner": {
+    "name": "breezedeus",
+    "email": "contact@breezedeus.com"
+  },
+  "metadata": {
+    "description": "Document AI skills for web content conversion and processing",
+    "version": "1.0.0"
+  },
+  "plugins": [
     {
-      "name": "docai-convert2md",
-      "description": "Convert web pages to Markdown format - prioritizes non-Python methods (Jina Reader, Firecrawl) with Python fallback",
-      "path": "skills/docai-convert2md"
+      "name": "docai-skills",
+      "description": "Collection of document AI skills including web to Markdown conversion with priority-based methods (Jina Reader, Firecrawl, Python fallback)",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/docai-convert2md"
+      ]
     }
-  ],
-  "categories": ["document-processing", "conversion", "ai-tools"],
-  "tags": ["markdown", "web-scraping", "arxiv", "pdf", "document-ai"]
+  ]
 }
