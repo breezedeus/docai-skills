@@ -22,7 +22,6 @@ docai-skills/
     └── docai-web2summary/              # Skill 2: 网页智能总结
         ├── SKILL.md                   # ⭐ Claude Code Skill 定义
         ├── README.md                  # 使用说明
-        ├── QUICKSTART.md              # 快速开始
         └── tools/
             ├── summarize.py           # 总结工具实现
             └── __init__.py
