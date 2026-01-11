@@ -148,26 +148,47 @@ Use when:
 
 ### Quick Start
 
+**Option A: Using uv (Recommended)**
 ```bash
-# Install dependencies
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Initialize environment
 cd docai-skills
 uv sync
 
-# Or install manually
+# Run script
+uv run python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
+```
+
+**Option B: Using pip**
+```bash
+# Install dependencies
+pip install requests beautifulsoup4 markdownify pymupdf
+
+# Run script
+python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
+```
+
+**Option C: For Claude Code Integration**
+```bash
+# Install to system Python (one-time setup)
+uv pip install --system requests beautifulsoup4 markdownify pymupdf
+# or
 pip install requests beautifulsoup4 markdownify pymupdf
 ```
 
 ### Usage
 
 ```bash
-# Basic conversion
-python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
+# Basic conversion (with uv)
+uv run python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
 
 # Save to file
-python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering -o article.md
+uv run python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering -o article.md
 
 # arXiv paper
-python skills/docai-web2md/tools/convert.py https://arxiv.org/abs/2601.04500v1
+uv run python skills/docai-web2md/tools/convert.py https://arxiv.org/abs/2601.04500v1
 ```
 
 ### Python API

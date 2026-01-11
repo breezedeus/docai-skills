@@ -12,19 +12,60 @@
 
 ## 📦 安装依赖
 
-此 skill 依赖于 `docai-web2md`，确保已安装：
+此 skill 依赖于 `docai-web2md` 和相关 Python 包。
+
+### 方式 1: 使用 uv（推荐）
 
 ```bash
-# 在 docai-skills 目录下
-/plugin install docai-web2md
+# 1. 安装 uv（如果尚未安装）
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. 在 docai-skills 目录初始化环境
+cd docai-skills
+uv sync
+
+# 3. 执行脚本
+uv run python skills/docai-web2summary/tools/summarize.py https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA
 ```
+
+### 方式 2: 使用 pip（传统方式）
+
+```bash
+# 1. 创建虚拟环境（可选但推荐）
+python -m venv .venv
+source .venv/bin/activate
+
+# 2. 安装依赖
+pip install requests beautifulsoup4 markdownify pymupdf
+
+# 3. 执行脚本
+python skills/docai-web2summary/tools/summarize.py https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA
+```
+
+### ⚠️ Claude Code Skill 集成
+
+**重要**：Claude Code 调用 Skill 时使用系统 Python，需要额外配置：
+
+```bash
+# 使用 uv 安装到系统（不影响项目虚拟环境）
+uv pip install --system requests beautifulsoup4 markdownify pymupdf
+
+# 或使用 pip
+pip install requests beautifulsoup4 markdownify pymupdf
+```
+
+**详见**：[UV_ENVIRONMENT.md](../../UV_ENVIRONMENT.md)
 
 ## 🚀 使用方法
 
 ### 基本用法
 
 ```bash
-# 总结网页内容
+# 使用 uv run（推荐）
+uv run python skills/docai-web2summary/tools/summarize.py https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA
+
+# 或激活环境后使用
+source .venv/bin/activate
 python skills/docai-web2summary/tools/summarize.py https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA
 ```
 
@@ -32,14 +73,14 @@ python skills/docai-web2summary/tools/summarize.py https://mp.weixin.qq.com/s/XC
 
 ```bash
 # 使用特定模型
-python skills/docai-web2summary/tools/summarize.py https://arxiv.org/abs/2601.04500v1 --model sonnet
+uv run python skills/docai-web2summary/tools/summarize.py https://arxiv.org/abs/2601.04500v1 --model sonnet
 ```
 
 ### 保存到文件
 
 ```bash
 # 输出到文件
-python skills/docai-web2summary/tools/summarize.py https://www.breezedeus.com/article/ai-agent-context-engineering --output summary.md
+uv run python skills/docai-web2summary/tools/summarize.py https://www.breezedeus.com/article/ai-agent-context-engineering --output summary.md
 ```
 
 ## 📋 输出格式

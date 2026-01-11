@@ -35,10 +35,34 @@ This skill combines **web conversion** and **AI summarization** to transform any
 
 ## Quick Start
 
+### Prerequisites
+
+**Option A: Using uv (Recommended)**
+```bash
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Initialize environment
+cd docai-skills
+uv sync
+
+# For Claude Code integration, install to system
+uv pip install --system requests beautifulsoup4 markdownify pymupdf
+```
+
+**Option B: Using pip**
+```bash
+# Install dependencies to system Python
+pip install requests beautifulsoup4 markdownify pymupdf
+```
+
 ### Basic Usage
 
 ```bash
-# Summarize any web page
+# With uv (recommended)
+uv run python skills/docai-web2summary/tools/summarize.py https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA
+
+# Or with pip
 python skills/docai-web2summary/tools/summarize.py https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA
 ```
 
@@ -46,13 +70,13 @@ python skills/docai-web2summary/tools/summarize.py https://mp.weixin.qq.com/s/XC
 
 ```bash
 # Use specific AI model
-python skills/docai-web2summary/tools/summarize.py https://arxiv.org/abs/2601.04500v1 --model sonnet
+uv run python skills/docai-web2summary/tools/summarize.py https://arxiv.org/abs/2601.04500v1 --model sonnet
 
 # Save to file
-python skills/docai-web2summary/tools/summarize.py https://www.breezedeus.com/article/ai-agent-context-engineering --output summary.md
+uv run python skills/docai-web2summary/tools/summarize.py https://www.breezedeus.com/article/ai-agent-context-engineering --output summary.md
 
 # Use haiku for faster/cheaper summaries
-python skills/docai-web2summary/tools/summarize.py https://example.com/blog/post --model haiku
+uv run python skills/docai-web2summary/tools/summarize.py https://example.com/blog/post --model haiku
 ```
 
 ## Output Format

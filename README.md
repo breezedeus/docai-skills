@@ -101,12 +101,57 @@ python skills/docai-web2summary/tools/summarize.py https://arxiv.org/abs/2601.04
 - [ ] **docai:layout-analyze** - 文档布局分析
 - [ ] **docai:doc-classify** - 文档分类
 
-## 安装项目（开发环境）
+## 🛠️ 开发环境设置
+
+### 使用 uv（推荐）
 
 ```bash
+# 1. 安装 uv（如果尚未安装）
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. 克隆项目
+git clone <repo>
 cd docai-skills
+
+# 3. 初始化虚拟环境
 uv sync
+
+# 4. 执行脚本（方式 A：使用 uv run）
+uv run python skills/docai-web2md/tools/convert.py https://example.com
+
+# 5. 或激活环境后执行（方式 B）
+source .venv/bin/activate
+python skills/docai-web2md/tools/convert.py https://example.com
 ```
+
+### 使用 pip（传统方式）
+
+```bash
+# 1. 创建虚拟环境
+python -m venv .venv
+source .venv/bin/activate
+
+# 2. 安装依赖
+pip install -r requirements.txt  # 或手动安装
+pip install requests beautifulsoup4 markdownify pymupdf
+
+# 3. 执行脚本
+python skills/docai-web2md/tools/convert.py https://example.com
+```
+
+### ⚠️ Claude Code Skill 集成
+
+**重要**：Claude Code 调用 Skill 时使用系统 Python，需要额外配置：
+
+```bash
+# 选项 1: 安装到系统 Python（一次性）
+uv pip install --system requests beautifulsoup4 markdownify pymupdf
+
+# 选项 2: 使用 pip 安装到系统
+pip install requests beautifulsoup4 markdownify pymupdf
+```
+
+详见：[UV_ENVIRONMENT.md](UV_ENVIRONMENT.md) - 完整的 uv 环境管理指南
 
 ## 许可证
 

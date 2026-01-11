@@ -215,18 +215,33 @@ Converts web pages to Markdown.
 ## 下一步建议
 
 ### 1. 测试 Skills
+
+#### 方式 A: 独立测试（推荐）
+
 ```bash
-# 复制到 Claude Code
+# 使用 uv run（无需激活环境）
+uv run python skills/docai-web2md/tools/convert.py https://breezedeus.com
+uv run python skills/docai-web2summary/tools/summarize.py https://breezedeus.com
+
+# 或激活环境后
+source .venv/bin/activate
+python skills/docai-web2md/tools/convert.py https://breezedeus.com
+python skills/docai-web2summary/tools/summarize.py https://breezedeus.com
+```
+
+#### 方式 B: Claude Code Skill 测试
+
+```bash
+# 1. 安装依赖到系统 Python（一次性）
+uv pip install --system requests beautifulsoup4 markdownify pymupdf
+
+# 2. 复制到 Claude Code
 cp -r skills/docai-web2md ~/.claude/skills/
 cp -r skills/docai-web2summary ~/.claude/skills/
 
-# 在 Claude Code 中测试
+# 3. 在 Claude Code 中测试
 # 输入: "帮我把 https://mp.weixin.qq.com/s/1LfkYdbzymoWxdvdnKeLnA 转换成 Markdown"
 # 输入: "请总结这个链接：https://arxiv.org/abs/2601.04500v1"
-
-# 或独立测试工具
-uv run python skills/docai-web2md/tools/convert.py https://breezedeus.com
-uv run python skills/docai-web2summary/tools/summarize.py https://breezedeus.com
 ```
 
 ### 2. 添加更多 Skills
@@ -263,3 +278,4 @@ skills/
 
 - [Claude Code Skills 规范](https://github.com/anthropics/claude-code-skills)
 - [TDD for Skills](https://github.com/anthropics/claude-code-skills/blob/main/skills/writing-skills/SKILL.md)
+- [UV 环境管理指南](UV_ENVIRONMENT.md) - 完整的 uv 使用说明

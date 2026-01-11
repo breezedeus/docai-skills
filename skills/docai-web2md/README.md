@@ -18,25 +18,54 @@
 
 ## 快速开始
 
-### 方法 1: Jina Reader（推荐，无需安装）
+### 方式 1: 使用 uv（推荐）
 
 ```bash
-# 浏览器直接访问
-https://r.jina.ai/https://www.breezedeus.com/article/ai-agent-context-engineering
+# 1. 安装 uv（如果尚未安装）
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 或使用 curl
+# 2. 在 docai-skills 目录初始化环境
+cd docai-skills
+uv sync
+
+# 3. 执行脚本（无需激活环境）
+uv run python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
+```
+
+### 方式 2: 使用 pip（传统方式）
+
+```bash
+# 1. 创建虚拟环境（可选但推荐）
+python -m venv .venv
+source .venv/bin/activate
+
+# 2. 安装依赖
+pip install requests beautifulsoup4 markdownify pymupdf
+
+# 3. 执行脚本
+python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
+```
+
+### 方式 3: Jina Reader API（无需安装）
+
+```bash
+# 直接使用 API，无需任何依赖
 curl https://r.jina.ai/https://www.breezedeus.com/article/ai-agent-context-engineering
 ```
 
-### 方法 2: Python 工具（完整功能）
+### ⚠️ Claude Code Skill 集成
+
+**重要**：Claude Code 调用 Skill 时使用系统 Python，需要额外配置：
 
 ```bash
-# 1. 安装依赖（仅用于 Python 回退方法）
-pip install requests beautifulsoup4 markdownify pymupdf
+# 使用 uv 安装到系统（不影响项目虚拟环境）
+uv pip install --system requests beautifulsoup4 markdownify pymupdf
 
-# 2. 使用
-python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
+# 或使用 pip
+pip install requests beautifulsoup4 markdownify pymupdf
 ```
+
+**详见**：[UV_ENVIRONMENT.md](../../UV_ENVIRONMENT.md)
 
 ## 命令行使用
 
