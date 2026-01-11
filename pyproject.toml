@@ -1,6 +1,6 @@
 [project]
 name = "docai-skills"
-version = "0.1.0"
+version = "1.0.1"
 description = "DocAI Skills Marketplace - Collection of document AI skills"
 readme = "README.md"
 requires-python = ">=3.11"
