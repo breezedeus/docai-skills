@@ -2,7 +2,7 @@
 """
 URL 内容总结工具
 
-调用 docai-convert2md 将网页转换为 Markdown，然后使用 AI 进行结构化总结。
+调用 docai-web2md 将网页转换为 Markdown，然后使用 AI 进行结构化总结。
 
 用法:
     python summarize.py <url> [--model <model_name>] [--output <file>]
@@ -25,21 +25,21 @@ class URLSummarizer:
 
     def __init__(self):
         self.script_dir = Path(__file__).parent
-        # skills/docai-urlsummarizer/tools/summarize.py
-        # skills/docai-urlsummarizer/
+        # skills/docai-web2summary/tools/summarize.py
+        # skills/docai-web2summary/
         # skills/
         # docai-skills/
         self.repo_root = self.script_dir.parent.parent.parent
 
     def convert_to_markdown(self, url):
-        """使用 docai-convert2md 转换 URL 为 Markdown"""
-        convert_script = self.repo_root / "skills" / "docai-convert2md" / "tools" / "convert.py"
+        """使用 docai-web2md 转换 URL 为 Markdown"""
+        convert_script = self.repo_root / "skills" / "docai-web2md" / "tools" / "convert.py"
 
         if not convert_script.exists():
             raise FileNotFoundError(f"转换脚本不存在: {convert_script}")
 
         try:
-            # 调用 docai-convert2md
+            # 调用 docai-web2md
             result = subprocess.run(
                 ["python", str(convert_script), url],
                 capture_output=True,

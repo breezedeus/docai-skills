@@ -1,29 +1,29 @@
 {
-  "name": "docai-urlsummarizer",
-  "title": "URL 内容总结器",
-  "description": "自动将网页 URL 转换为 Markdown 并生成结构化总结，结合 docai-convert2md 和 AI 总结功能",
+  "name": "docai-web2summary",
+  "title": "Web to Summary",
+  "description": "Convert web pages to structured summaries using AI. Automatically converts URLs to Markdown via docai-web2md, then generates structured summaries with core insights, technical details, and key metrics.",
   "version": "1.0.0",
   "author": "DocAI",
   "license": "MIT",
-  "categories": ["content", "summarization", "web"],
+  "categories": ["content", "summarization", "web", "ai"],
   "tools": [
     {
       "name": "summarize",
-      "description": "总结网页内容，先转换为 Markdown 再进行 AI 结构化总结",
+      "description": "Convert URL to Markdown and generate structured AI summary",
       "parameters": {
         "url": {
           "type": "string",
-          "description": "要总结的网页 URL",
+          "description": "Web page URL to summarize",
           "required": true
         },
         "model": {
           "type": "string",
-          "description": "指定 AI 模型（如 sonnet, haiku）",
+          "description": "AI model to use (sonnet, haiku, etc.)",
           "required": false
         },
         "output": {
           "type": "string",
-          "description": "输出文件路径",
+          "description": "Output file path",
           "required": false
         }
       },
@@ -31,9 +31,9 @@
     }
   ],
   "dependencies": [
-    "docai-convert2md"
+    "docai-web2md"
   ],
-  "keywords": ["url", "summarization", "markdown", "ai", "web-content"],
+  "keywords": ["web", "summarization", "markdown", "ai", "content", "extraction"],
   "examples": [
     "summarize https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA",
     "summarize https://arxiv.org/abs/2601.04500v1 --model sonnet",

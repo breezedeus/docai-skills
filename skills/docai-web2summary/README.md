@@ -1,10 +1,10 @@
-# docai-urlsummarizer
+# docai-web2summary
 
-一个智能 URL 内容总结工具，结合了 `docai-convert2md` 的网页转换能力和 AI 的结构化总结能力。
+一个智能 URL 内容总结工具，结合了 `docai-web2md` 的网页转换能力和 AI 的结构化总结能力。
 
 ## ✨ 功能特性
 
-- 🔄 **自动转换**：调用 `docai-convert2md` 将任意网页转换为 Markdown
+- 🔄 **自动转换**：调用 `docai-web2md` 将任意网页转换为 Markdown
 - 🤖 **AI 总结**：使用 AI 生成符合特定格式的深度总结
 - 📋 **标准化输出**：遵循统一的总结格式（核心洞见、技术细节、性能数据等）
 - 🎯 **多模型支持**：支持指定不同的 AI 模型（sonnet, haiku 等）
@@ -12,11 +12,11 @@
 
 ## 📦 安装依赖
 
-此 skill 依赖于 `docai-convert2md`，确保已安装：
+此 skill 依赖于 `docai-web2md`，确保已安装：
 
 ```bash
 # 在 docai-skills 目录下
-/plugin install docai-convert2md
+/plugin install docai-web2md
 ```
 
 ## 🚀 使用方法
@@ -25,21 +25,21 @@
 
 ```bash
 # 总结网页内容
-python skills/docai-urlsummarizer/tools/summarize.py https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA
+python skills/docai-web2summary/tools/summarize.py https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA
 ```
 
 ### 指定模型
 
 ```bash
 # 使用特定模型
-python skills/docai-urlsummarizer/tools/summarize.py https://arxiv.org/abs/2601.04500v1 --model sonnet
+python skills/docai-web2summary/tools/summarize.py https://arxiv.org/abs/2601.04500v1 --model sonnet
 ```
 
 ### 保存到文件
 
 ```bash
 # 输出到文件
-python skills/docai-urlsummarizer/tools/summarize.py https://www.breezedeus.com/article/ai-agent-context-engineering --output summary.md
+python skills/docai-web2summary/tools/summarize.py https://www.breezedeus.com/article/ai-agent-context-engineering --output summary.md
 ```
 
 ## 📋 输出格式
@@ -66,7 +66,7 @@ python skills/docai-urlsummarizer/tools/summarize.py https://www.breezedeus.com/
 
 ## 🔧 工作流程
 
-1. **转换阶段**：调用 `docai-convert2md` 将 URL 转换为 Markdown
+1. **转换阶段**：调用 `docai-web2md` 将 URL 转换为 Markdown
    - 优先使用 Jina Reader API
    - 失败时使用 Firecrawl API
    - 最终回退到 Python 实现
@@ -120,7 +120,7 @@ python summarize.py https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA
 
 ## ⚠️ 注意事项
 
-1. **依赖要求**：需要安装 `docai-convert2md` 及其依赖
+1. **依赖要求**：需要安装 `docai-web2md` 及其依赖
 2. **网络连接**：需要互联网连接进行网页抓取和 AI 总结
 3. **超时设置**：转换限时 60 秒，总结限时 180 秒
 4. **内容长度**：建议源内容不超过 50,000 字符
@@ -140,19 +140,19 @@ python summarize.py https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA
 
 ### 依赖缺失
 ```bash
-# 安装 docai-convert2md
-/plugin install docai-convert2md
+# 安装 docai-web2md
+/plugin install docai-web2md
 
 # 安装 Python 依赖（如果需要）
 cd docai-skills
 uv sync
 ```
 
-## 🤝 与 docai-convert2md 的关系
+## 🤝 与 docai-web2md 的关系
 
-`docai-urlsummarizer` 是 `docai-convert2md` 的增强版本：
+`docai-web2summary` 是 `docai-web2md` 的增强版本：
 
-| 功能 | docai-convert2md | docai-urlsummarizer |
+| 功能 | docai-web2md | docai-web2summary |
 |------|------------------|---------------------|
 | 网页转换 | ✅ | ✅ |
 | Markdown 输出 | ✅ | ✅ |
