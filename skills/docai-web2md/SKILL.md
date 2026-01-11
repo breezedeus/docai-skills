@@ -1,9 +1,9 @@
 ---
-name: docai-convert2md
-description: Use when needing to convert web pages to Markdown format - prioritizes non-Python methods (Jina Reader, Firecrawl) with Python fallback
+name: docai-web2md
+description: Convert web pages to Markdown format using priority-based approach (Jina Reader, Firecrawl, Python fallback). Supports arXiv HTML priority, WeChat articles, static blogs, and dynamic pages. Use when needing to convert web content for documentation, knowledge bases, or content archiving.
 ---
 
-# docai:convert2md
+# docai:web2md
 
 ## Overview
 
@@ -161,19 +161,19 @@ pip install requests beautifulsoup4 markdownify pymupdf
 
 ```bash
 # Basic conversion
-python skills/docai-convert2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
+python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
 
 # Save to file
-python skills/docai-convert2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering -o article.md
+python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering -o article.md
 
 # arXiv paper
-python skills/docai-convert2md/tools/convert.py https://arxiv.org/abs/2601.04500v1
+python skills/docai-web2md/tools/convert.py https://arxiv.org/abs/2601.04500v1
 ```
 
 ### Python API
 
 ```python
-from skills.docai_convert2md.tools.convert import WebToMarkdown
+from skills.docai_web2md.tools.convert import WebToMarkdown
 
 converter = WebToMarkdown()
 

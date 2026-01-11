@@ -11,23 +11,31 @@ docai-skills/
 │
 └── skills/                             # Skill 集合目录
     ├── __init__.py                     # Python 包入口（可选）
-    └── docai-convert2md/              # 第一个 Skill: 网页转 Markdown
-        ├── SKILL.md                   # ⭐ Claude Code Skill 定义（必需）
-        ├── TEST_RESULTS.md            # 实际测试结果文档
-        └── tools/                     # 可选：工具脚本目录
-            ├── convert.py             # 可执行转换工具
-            └── README.md              # 工具使用说明
+    │
+    ├── docai-web2md/                   # Skill 1: 网页转 Markdown
+    │   ├── SKILL.md                   # ⭐ Claude Code Skill 定义
+    │   ├── README.md                  # 工具使用说明
+    │   └── tools/
+    │       ├── convert.py             # 转换工具实现
+    │       └── __init__.py
+    │
+    └── docai-web2summary/              # Skill 2: 网页智能总结
+        ├── SKILL.md                   # ⭐ Claude Code Skill 定义
+        ├── README.md                  # 使用说明
+        └── tools/
+            ├── summarize.py           # 总结工具实现
+            └── __init__.py
 ```
 
 ## 核心文件说明
 
-### `skills/docai-convert2md/SKILL.md`
+### `skills/docai-web2md/SKILL.md`
 **这是什么？**: Claude Code 识别和使用的 skill 定义文件
 
 **格式要求**:
 ```markdown
 ---
-name: docai-convert2md
+name: docai-web2md
 description: Use when needing to convert web pages to Markdown format
 ---
 
@@ -124,7 +132,7 @@ description: Use when [触发条件]
 ### 方式 1: 直接复制到 Claude Code
 ```bash
 # 将 skill 复制到 Claude Code 的 skills 目录
-cp -r skills/docai-convert2md ~/.claude/skills/
+cp -r skills/docai-web2md ~/.claude/skills/
 
 # 重启 Claude Code 或等待自动加载
 ```
@@ -132,13 +140,13 @@ cp -r skills/docai-convert2md ~/.claude/skills/
 ### 方式 2: 通过 CLI 工具（待开发）
 ```bash
 # 未来支持
-marketplace install docai-convert2md
+marketplace install docai-web2md
 ```
 
 ### 方式 3: GitHub 集成（待开发）
 ```bash
 # 从 GitHub 安装
-/plugin install github.com/your-username/docai-skills/docai-convert2md
+/plugin install github.com/your-username/docai-skills/docai-web2md
 ```
 
 ## 如何调用已安装的 Skill
@@ -147,7 +155,7 @@ marketplace install docai-convert2md
 ```
 用户: "帮我把 https://breezedeus.com 转换成 Markdown"
 
-Claude: (读取 docai-convert2md SKILL.md)
+Claude: (读取 docai-web2md SKILL.md)
 1. 分析 URL 类型
 2. 选择合适的方法
 3. 执行代码
@@ -168,7 +176,7 @@ Test with:
 ### GREEN: 写最小 Skill
 ```markdown
 ---
-name: docai-convert2md
+name: docai-web2md
 description: Use when needing to convert web pages to Markdown
 ---
 
@@ -191,11 +199,13 @@ Converts web pages to Markdown.
 
 ✅ **已完成**:
 - 项目结构创建
-- 第一个 skill: docai-convert2md
+- Skill 1: docai-web2md (网页转 Markdown)
+- Skill 2: docai-web2summary (网页智能总结)
 - 符合 Claude Code skill 规范
 - ✅ **微信公众号转换测试通过** (3395 字符)
 - ✅ **arXiv 论文提取测试通过**
 - ✅ **静态页面转换测试通过**
+- ✅ **AI 结构化总结测试通过**
 
 🔄 **待完成**:
 - CLI 工具（安装/管理 skills）
@@ -204,22 +214,26 @@ Converts web pages to Markdown.
 
 ## 下一步建议
 
-### 1. 测试第一个 Skill
+### 1. 测试 Skills
 ```bash
 # 复制到 Claude Code
-cp -r skills/docai-convert2md ~/.claude/skills/
+cp -r skills/docai-web2md ~/.claude/skills/
+cp -r skills/docai-web2summary ~/.claude/skills/
 
 # 在 Claude Code 中测试
 # 输入: "帮我把 https://mp.weixin.qq.com/s/1LfkYdbzymoWxdvdnKeLnA 转换成 Markdown"
+# 输入: "请总结这个链接：https://arxiv.org/abs/2601.04500v1"
 
 # 或独立测试工具
-uv run python skills/docai-convert2md/tools/convert.py https://breezedeus.com
+uv run python skills/docai-web2md/tools/convert.py https://breezedeus.com
+uv run python skills/docai-web2summary/tools/summarize.py https://breezedeus.com
 ```
 
 ### 2. 添加更多 Skills
 ```bash
 skills/
-├── docai-convert2md/          # ✅ 已完成
+├── docai-web2md/          # ✅ 已完成
+├── docai-web2summary/     # ✅ 已完成
 ├── docai-pdf-extract/         # ⏳ 待创建
 ├── docai-table-recognize/     # ⏳ 待创建
 └── docai-ocr/                 # ⏳ 待创建

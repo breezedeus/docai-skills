@@ -1,0 +1,42 @@
+{
+  "name": "docai-web2summary",
+  "title": "Web to Summary",
+  "description": "Convert web pages to structured summaries using AI. Automatically converts URLs to Markdown via docai-web2md, then generates structured summaries with core insights, technical details, and key metrics.",
+  "version": "1.0.0",
+  "author": "DocAI",
+  "license": "MIT",
+  "categories": ["content", "summarization", "web", "ai"],
+  "tools": [
+    {
+      "name": "summarize",
+      "description": "Convert URL to Markdown and generate structured AI summary",
+      "parameters": {
+        "url": {
+          "type": "string",
+          "description": "Web page URL to summarize",
+          "required": true
+        },
+        "model": {
+          "type": "string",
+          "description": "AI model to use (sonnet, haiku, etc.)",
+          "required": false
+        },
+        "output": {
+          "type": "string",
+          "description": "Output file path",
+          "required": false
+        }
+      },
+      "command": "python tools/summarize.py"
+    }
+  ],
+  "dependencies": [
+    "docai-web2md"
+  ],
+  "keywords": ["web", "summarization", "markdown", "ai", "content", "extraction"],
+  "examples": [
+    "summarize https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA",
+    "summarize https://arxiv.org/abs/2601.04500v1 --model sonnet",
+    "summarize https://www.breezedeus.com/article/ai-agent-context-engineering --output summary.md"
+  ]
+}

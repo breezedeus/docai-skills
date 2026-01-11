@@ -1,6 +1,12 @@
-# Web to Markdown 转换工具
+# docai-web2md
 
 独立 Python 工具，用于将网页转换为 Markdown 格式，采用**优先级架构**。
+
+> 📖 **文档导航**
+> - **SKILL.md** - Claude Code 使用指南（如何调用此技能）
+> - **README.md** - 本文档（工具功能说明和独立使用）
+> - **tools/convert.py** - 实际转换代码实现
+> - **共享参考**: [web-sources.md](../../shared/references/web-sources.md) - 平台支持矩阵
 
 ## 核心特性
 
@@ -29,23 +35,23 @@ curl https://r.jina.ai/https://www.breezedeus.com/article/ai-agent-context-engin
 pip install requests beautifulsoup4 markdownify pymupdf
 
 # 2. 使用
-python skills/docai-convert2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
+python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
 ```
 
 ## 命令行使用
 
 ```bash
 # 基本用法（自动优先级）
-python skills/docai-convert2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
+python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
 
 # 保存到文件
-python skills/docai-convert2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering -o article.md
+python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering -o article.md
 
 # 纯文本模式
-python skills/docai-convert2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering --pure-text
+python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering --pure-text
 
 # 强制使用 Python 方法（跳过 Jina/Firecrawl）
-python skills/docai-convert2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering --use-python
+python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering --use-python
 ```
 
 ## 优先级架构
@@ -70,22 +76,22 @@ arXiv? → 下载 PDF 提取
 
 ```bash
 # 静态博客（Jina Reader）
-python skills/docai-convert2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
+python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
 
 # arXiv 论文（HTML 优先，PDF 回退）
-python skills/docai-convert2md/tools/convert.py https://arxiv.org/abs/2601.04500v1
+python skills/docai-web2md/tools/convert.py https://arxiv.org/abs/2601.04500v1
 
 # 微信公众号（Jina → Python 回退）
-python skills/docai-convert2md/tools/convert.py https://mp.weixin.qq.com/s/1LfkYdbzymoWxdvdnKeLnA
+python skills/docai-web2md/tools/convert.py https://mp.weixin.qq.com/s/1LfkYdbzymoWxdvdnKeLnA
 
 # X.com/Twitter（Python 动态渲染）
-python skills/docai-convert2md/tools/convert.py https://x.com/user/status/123
+python skills/docai-web2md/tools/convert.py https://x.com/user/status/123
 ```
 
 ## Python API
 
 ```python
-from skills.docai_convert2md.tools.convert import WebToMarkdown
+from skills.docai_web2md.tools.convert import WebToMarkdown
 
 converter = WebToMarkdown()
 
@@ -130,7 +136,7 @@ text = converter.convert("https://www.breezedeus.com/article/ai-agent-context-en
 
 ```bash
 # 测试 breezedeus.com 博客
-python skills/docai-convert2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
+python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
 ```
 
 ## 许可证

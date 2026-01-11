@@ -1,5 +1,5 @@
 {
-  "name": "breezedeus/docai-skills",
+  "name": "docai-skills",
   "owner": {
     "name": "Breezedeus",
     "email": "breezedeus@gmail.com"
@@ -15,7 +15,8 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/docai-convert2md"
+        "./skills/docai-web2md",
+        "./skills/docai-web2summary"
       ]
     }
   ]

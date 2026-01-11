@@ -15,7 +15,8 @@
 
 ```bash
 # 复制到 Claude Code 目录
-cp -r skills/docai-convert2md ~/.claude/skills/
+cp -r skills/docai-web2md ~/.claude/skills/
+cp -r skills/docai-web2summary ~/.claude/skills/
 ```
 
 ### 方式 3: 本地开发安装
@@ -27,7 +28,7 @@ cp -r skills/docai-convert2md ~/.claude/skills/
 
 ## 已实现的 Skills
 
-### docai:convert2md - 网页转 Markdown
+### docai:web2md - 网页转 Markdown
 
 将网页链接转换为 Markdown 格式，支持多种平台。
 
@@ -36,7 +37,7 @@ cp -r skills/docai-convert2md ~/.claude/skills/
 - 动态页面（React/Vue SPA）
 - 社交媒体（X.com, Twitter）
 - 微信公众号文章
-- arXiv 论文
+- arXiv 论文（HTML 优先，PDF 回退）
 - 纯文本模式
 
 **安装 Python 依赖（仅用于回退方法）：**
@@ -55,7 +56,42 @@ pip install requests beautifulsoup4 markdownify pymupdf
 - ✅ 微信公众号：Jina → Python，~2-5 秒
 - ✅ 动态页面：Python，~5-10 秒
 
-**详见：** [skills/docai-convert2md/README.md](skills/docai-convert2md/README.md) | [测试结果](skills/docai-convert2md/TEST_RESULTS.md)
+**详见：** [skills/docai-web2md/README.md](skills/docai-web2md/README.md) | [使用指南](skills/docai-web2md/SKILL.md)
+
+---
+
+### docai:web2summary - 网页智能总结
+
+基于 `docai-web2md` 的网页转换能力，结合 AI 生成结构化深度总结。
+
+**核心功能：**
+- 🔄 自动转换网页为 Markdown
+- 🤖 AI 生成标准化格式总结
+- 📋 包含核心洞见、技术细节、性能数据等
+- 💾 支持直接保存到文件
+
+**使用：**
+```bash
+# 基本总结
+python skills/docai-web2summary/tools/summarize.py https://mp.weixin.qq.com/s/...
+
+# 指定模型并保存
+python skills/docai-web2summary/tools/summarize.py https://arxiv.org/abs/2601.04500v1 --model sonnet -o summary.md
+```
+
+**输出格式：**
+```
+# **标题 | 机构名称**
+
+✔ 一句话总结
+✔ **核心洞见**：深度分析
+✔ **技术细节/架构创新**：具体实现
+✔ **性能数据/实验结果**：具体数字
+✔ **应用场景**：实际使用场景
+✔ **长期意义/游戏规则改变者**：深层影响
+```
+
+**详见：** [skills/docai-web2summary/README.md](skills/docai-web2summary/README.md) | [使用指南](skills/docai-web2summary/SKILL.md)
 
 ## 计划中的 Skills
 
