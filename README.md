@@ -18,11 +18,6 @@
 /plugin install docai-skills
 ```
 
-**注意**：此方式需要：
-- ✅ GitHub 仓库已创建
-- ✅ `marketplace.json` 已配置 GitHub 路径
-- ✅ 仓库包含完整的 skill 结构
-
 ## 已实现的 Skills
 
 ### docai:web2md - 网页转 Markdown
