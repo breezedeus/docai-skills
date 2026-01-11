@@ -1,5 +1,73 @@
 # 更新日志
 
+## 2026-01-11 - 微信公众号特殊处理 & Skill 定义优化
+
+### 微信公众号特殊处理
+
+**修改文件**: `skills/docai-web2md/tools/convert.py`
+
+**问题**: Jina Reader 对微信公众号文章支持不佳，导致转换结果不理想。
+
+**解决方案**: 添加微信公众号检测，直接使用 Python 方法。
+
+```python
+# 新增方法
+def _is_wechat(self, url):
+    return 'weixin.qq.com' in url
+
+# 转换流程修改
+def convert(self, url, ...):
+    # arXiv 特殊处理
+    if self._is_arxiv(url):
+        url = self._convert_arxiv_to_html(url)
+
+    # 微信公众号：直接 Python 方法 ⭐
+    if self._is_wechat(url):
+        return self._python_convert(url, pure_text)
+
+    # 其他网站：优先级方法
+    ...
+```
+
+**转换流程**:
+```
+输入 URL
+    ↓
+是 arXiv? → HTML URL
+    ↓
+是微信公众号? → Python 直接处理 ⭐
+    ↓
+尝试 Jina Reader (快速)
+    ↓ (失败)
+尝试 Firecrawl (需要密钥)
+    ↓ (失败)
+Python 回退
+```
+
+**影响**:
+- ✅ 微信公众号转换质量提升
+- ✅ 避免无效的 Jina Reader 尝试
+- ✅ 节省时间（15秒超时 → 直接处理）
+
+### Skill 定义优化
+
+**修改文件**:
+- `skills/docai-web2md/SKILL.md` (320 → 64 行)
+- `skills/docai-web2summary/SKILL.md` (301 → 72 行)
+
+**优化内容**:
+1. **Description 简化**: 从技术细节改为触发条件
+2. **Quick Action 顶部**: 直接给出执行命令
+3. **精简结构**: 移除冗余文档，保留核心信息
+4. **触发词优化**: 包含中英文关键词
+
+**效果**:
+- 更容易被 Claude Code 识别并执行
+- 减少"显示文档而不执行"的情况
+- 提高触发准确率
+
+---
+
 ## 2026-01-11 - Skill 定义优化
 
 ### 优化内容

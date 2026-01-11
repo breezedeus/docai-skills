@@ -10,11 +10,32 @@
 
 ## 核心特性
 
-- ✅ **Jina Reader API 优先** - 零安装，最快最简单
+- ✅ **Jina Reader API 优先** - 零安装，最快最简单（微信公众号除外）
 - ✅ **Firecrawl API 支持** - 高级爬虫需求
 - ✅ **Python 智能回退** - 以上方法失败时自动切换
 - ✅ **arXiv HTML 优先** - 优先获取 HTML 版，失败时回退 PDF
-- ✅ **多平台支持** - 微信公众号、静态博客、动态页面等
+- ✅ **多平台支持** - 微信公众号（直接 Python）、静态博客、动态页面等
+
+## 优先级策略
+
+```python
+# 转换流程
+输入 URL
+    ↓
+是 arXiv? → 转换为 HTML URL
+    ↓
+是微信公众号? → 直接 Python 方法 ⭐
+    ↓
+尝试 Jina Reader API (快速)
+    ↓ (失败)
+尝试 Firecrawl API (需要密钥)
+    ↓ (失败)
+Python 方法 (回退)
+    ↓
+arXiv? → 下载 PDF 提取
+```
+
+**微信公众号特殊处理**：由于 Jina Reader 对微信公众号支持不佳，直接使用 Python 方法以确保最佳效果。
 
 ## 快速开始
 
