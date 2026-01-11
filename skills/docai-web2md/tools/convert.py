@@ -46,7 +46,7 @@ class WebToMarkdown:
         """转换 URL 到 Markdown（优先级方法）
 
         优先级：
-        1. Jina Reader API (如果可用)
+        1. Jina Reader API (如果可用，微信公众号除外)
         2. Firecrawl API (如果有API密钥)
         3. Python实现 (回退)
 
@@ -63,6 +63,10 @@ class WebToMarkdown:
         # arXiv 特殊处理：转换为 HTML URL
         if self._is_arxiv(url):
             url = self._convert_arxiv_to_html(url)
+
+        # 微信公众号：直接使用 Python 方法
+        if self._is_wechat(url):
+            return self._python_convert(url, pure_text)
 
         # 非Python方法优先（除非强制使用Python）
         if not use_python:
@@ -192,6 +196,10 @@ class WebToMarkdown:
     def _is_arxiv(self, url):
         """检测是否为 arXiv 链接"""
         return 'arxiv.org' in url and ('/abs/' in url or '/pdf/' in url or '/html/' in url)
+
+    def _is_wechat(self, url):
+        """检测是否为微信公众号链接"""
+        return 'weixin.qq.com' in url
 
     def _convert_arxiv_to_html(self, url):
         """转换 arXiv 链接为 HTML URL"""

@@ -7,9 +7,11 @@ description: Use when needing to convert web pages to Markdown format. Uses prio
 
 ## Overview
 Converts web pages to Markdown with automatic priority-based method selection:
-1. **Jina Reader API** (fastest, zero install)
+1. **Jina Reader API** (fastest, zero install) - except WeChat
 2. **Firecrawl API** (advanced crawling)
 3. **Python fallback** (when APIs unavailable)
+
+**Special handling**: WeChat articles → Python directly (best results)
 
 **Use when**: User says "convert to Markdown", "转成 Markdown", "网页转 Markdown"
 
@@ -48,12 +50,12 @@ python skills/docai-web2md/tools/convert.py <URL> --use-python
 ```
 
 ## Supported Platforms
-- ✅ Static blogs & documentation
-- ✅ React/Vue dynamic pages
-- ✅ WeChat articles (微信公众号)
-- ✅ X.com / Twitter
+- ✅ Static blogs & documentation (Jina/Python)
+- ✅ React/Vue dynamic pages (Python)
+- ✅ WeChat articles (微信公众号) - Python direct
+- ✅ X.com / Twitter (Python)
 - ✅ arXiv papers (HTML → PDF fallback)
-- ✅ Medium/Substack
+- ✅ Medium/Substack (Python)
 
 ## Common Issues
 - **Missing dependencies**: Install with `uv pip install --system requests beautifulsoup4 markdownify pymupdf`
