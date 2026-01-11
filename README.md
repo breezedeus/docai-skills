@@ -2,29 +2,26 @@
 
 一个专注于文档 AI 相关技能的 Claude Code Skill 集合。
 
-## 作为 Marketplace 安装
+## 安装到 Claude Code
 
-### 方式 1: 通过 Marketplace（推荐）
+### GitHub Marketplace（推荐）
 
 ```bash
-# 从 GitHub 安装
+# 1. 添加 marketplace 来源
 /plugin marketplace add breezedeus/docai-skills
+
+# 2. 安装具体 skills
+/plugin install docai-web2md
+/plugin install docai-web2summary
+
+# 3. 或安装所有
+/plugin install docai-skills
 ```
 
-### 方式 2: 手动安装
-
-```bash
-# 复制到 Claude Code 目录
-cp -r skills/docai-web2md ~/.claude/skills/
-cp -r skills/docai-web2summary ~/.claude/skills/
-```
-
-### 方式 3: 本地开发安装
-
-```bash
-# 克隆仓库后，从本地路径安装
-/plugin marketplace add /path/to/docai-skills
-```
+**注意**：此方式需要：
+- ✅ GitHub 仓库已创建
+- ✅ `marketplace.json` 已配置 GitHub 路径
+- ✅ 仓库包含完整的 skill 结构
 
 ## 已实现的 Skills
 

@@ -12,7 +12,7 @@
     {
       "name": "docai-skills",
       "description": "Collection of document AI skills including web to Markdown conversion with priority-based methods (Jina Reader, Firecrawl, Python fallback)",
-      "source": "./",
+      "source": "github.com/breezedeus/docai-skills",
       "strict": false,
       "skills": [
         "./skills/docai-web2md",
