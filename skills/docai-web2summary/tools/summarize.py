@@ -59,7 +59,10 @@ class URLSummarizer:
 
             if result.returncode != 0:
                 error_msg = result.stderr.strip()
-                if "Jina Reader 失败" in error_msg and "Firecrawl API 密钥未设置" in error_msg:
+                if (
+                    "Jina Reader 失败" in error_msg
+                    and "Firecrawl API 密钥未设置" in error_msg
+                ):
                     # 如果非Python方法都失败，尝试强制使用Python方法
                     result = subprocess.run(
                         [sys.executable, str(convert_script), url, "--use-python"],
@@ -139,7 +142,9 @@ class URLSummarizer:
         # 步骤2：内容截断保护
         if len(markdown) > self.MAX_CONTENT_LENGTH:
             logger.warning(
-                "内容过长 (%d 字符)，截断至 %d 字符", len(markdown), self.MAX_CONTENT_LENGTH,
+                "内容过长 (%d 字符)，截断至 %d 字符",
+                len(markdown),
+                self.MAX_CONTENT_LENGTH,
             )
             markdown = markdown[: self.MAX_CONTENT_LENGTH] + "\n\n[... 内容已截断 ...]"
 
@@ -159,7 +164,9 @@ class URLSummarizer:
 def main():
     """命令行入口"""
     logging.basicConfig(
-        level=logging.INFO, format="%(levelname)s: %(message)s", stream=sys.stderr,
+        level=logging.INFO,
+        format="%(levelname)s: %(message)s",
+        stream=sys.stderr,
     )
 
     parser = argparse.ArgumentParser(

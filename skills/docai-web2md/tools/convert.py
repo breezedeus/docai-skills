@@ -124,9 +124,9 @@ class WebToMarkdown:
             futures[executor.submit(self._try_jina_reader, url, pure_text)] = "jina"
 
             if self.firecrawl_api_key:
-                futures[
-                    executor.submit(self._try_firecrawl, url, pure_text)
-                ] = "firecrawl"
+                futures[executor.submit(self._try_firecrawl, url, pure_text)] = (
+                    "firecrawl"
+                )
 
             futures[executor.submit(self._python_convert, url, pure_text)] = "python"
 
@@ -508,7 +508,9 @@ class WebToMarkdown:
 def main():
     """命令行入口"""
     logging.basicConfig(
-        level=logging.INFO, format="%(levelname)s: %(message)s", stream=sys.stderr,
+        level=logging.INFO,
+        format="%(levelname)s: %(message)s",
+        stream=sys.stderr,
     )
 
     parser = argparse.ArgumentParser(
@@ -528,9 +530,13 @@ def main():
     )
 
     parser.add_argument("url", help="要转换的网页 URL")
-    parser.add_argument("--pure-text", action="store_true", help="输出纯文本（无 Markdown 格式）")
     parser.add_argument(
-        "--use-python", action="store_true", help="强制使用Python方法（跳过Jina/Firecrawl）",
+        "--pure-text", action="store_true", help="输出纯文本（无 Markdown 格式）"
+    )
+    parser.add_argument(
+        "--use-python",
+        action="store_true",
+        help="强制使用Python方法（跳过Jina/Firecrawl）",
     )
     parser.add_argument("--output", "-o", help="输出到文件")
 
