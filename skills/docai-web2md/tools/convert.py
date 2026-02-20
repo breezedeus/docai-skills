@@ -49,9 +49,9 @@ class WebToMarkdown:
 
     def __init__(self):
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (compatible; DocAI-Converter/1.0)'
-        })
+        self.session.headers.update(
+            {"User-Agent": "Mozilla/5.0 (compatible; DocAI-Converter/1.0)"}
+        )
         # 配置重试策略：仅针对 429/5xx，最多 2 次，指数退避
         retry = Retry(
             total=2,
@@ -63,7 +63,7 @@ class WebToMarkdown:
         self.session.mount("https://", adapter)
         self.session.mount("http://", adapter)
         # 从环境变量获取 Firecrawl API 密钥
-        self.firecrawl_api_key = os.environ.get('FIRECRAWL_API_KEY')
+        self.firecrawl_api_key = os.environ.get("FIRECRAWL_API_KEY")
 
     def __enter__(self):
         return self
@@ -89,7 +89,7 @@ class WebToMarkdown:
 
         # URL 校验
         parsed = urlparse(url)
-        if parsed.scheme not in ('http', 'https') or not parsed.netloc:
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
             raise ValueError(f"无效的 URL: {url}")
 
         # arXiv 特殊处理：转换为 HTML URL
@@ -121,12 +121,14 @@ class WebToMarkdown:
         """并行尝试多种方法，返回最快成功的结果"""
         futures = {}
         with ThreadPoolExecutor(max_workers=3) as executor:
-            futures[executor.submit(self._try_jina_reader, url, pure_text)] = 'jina'
+            futures[executor.submit(self._try_jina_reader, url, pure_text)] = "jina"
 
             if self.firecrawl_api_key:
-                futures[executor.submit(self._try_firecrawl, url, pure_text)] = 'firecrawl'
+                futures[
+                    executor.submit(self._try_firecrawl, url, pure_text)
+                ] = "firecrawl"
 
-            futures[executor.submit(self._python_convert, url, pure_text)] = 'python'
+            futures[executor.submit(self._python_convert, url, pure_text)] = "python"
 
             for future in as_completed(futures):
                 try:
@@ -170,16 +172,16 @@ class WebToMarkdown:
                 "https://api.firecrawl.dev/v0/scrape",
                 headers={"Authorization": f"Bearer {self.firecrawl_api_key}"},
                 json={"url": url, "formats": ["markdown"]},
-                timeout=self.TIMEOUT_FIRECRAWL
+                timeout=self.TIMEOUT_FIRECRAWL,
             )
 
             if response.status_code == 200:
                 data = response.json()
-                if data.get('success') and data.get('data', {}).get('markdown'):
-                    markdown = data['data']['markdown']
+                if data.get("success") and data.get("data", {}).get("markdown"):
+                    markdown = data["data"]["markdown"]
                     if pure_text:
                         # 从 Markdown 提取纯文本
-                        return re.sub(r'[\*\#\`\[\]\(\)]', '', markdown)
+                        return re.sub(r"[\*\#\`\[\]\(\)]", "", markdown)
                     return markdown
             else:
                 logger.warning("Firecrawl 错误: %s", response.status_code)
@@ -221,37 +223,39 @@ class WebToMarkdown:
     def _clean_jina_markdown(self, markdown):
         """清理 Jina Reader 返回的 Markdown"""
         # 移除多余的空行
-        markdown = re.sub(r'\n{3,}', '\n\n', markdown)
+        markdown = re.sub(r"\n{3,}", "\n\n", markdown)
         # 移除行尾空格
-        markdown = re.sub(r' +\n', '\n', markdown)
+        markdown = re.sub(r" +\n", "\n", markdown)
         return markdown.strip()
 
     def _is_arxiv(self, url):
         """检测是否为 arXiv 链接"""
-        return 'arxiv.org' in url and ('/abs/' in url or '/pdf/' in url or '/html/' in url)
+        return "arxiv.org" in url and (
+            "/abs/" in url or "/pdf/" in url or "/html/" in url
+        )
 
     def _is_wechat(self, url):
         """检测是否为微信公众号链接"""
-        return 'weixin.qq.com' in url
+        return "weixin.qq.com" in url
 
     def _convert_arxiv_to_html(self, url):
         """转换 arXiv 链接为 HTML URL"""
-        if '/html/' in url:
+        if "/html/" in url:
             return url
-        if '/pdf/' in url:
-            paper_id = url.split('/pdf/')[-1].split('?')[0].replace('.pdf', '')
+        if "/pdf/" in url:
+            paper_id = url.split("/pdf/")[-1].split("?")[0].replace(".pdf", "")
             return f"https://arxiv.org/html/{paper_id}"
-        paper_id = url.split('/abs/')[-1].split('?')[0]
+        paper_id = url.split("/abs/")[-1].split("?")[0]
         return f"https://arxiv.org/html/{paper_id}"
 
     def _convert_arxiv_to_pdf(self, url):
         """转换 arXiv 链接为 PDF URL"""
-        if '/pdf/' in url:
+        if "/pdf/" in url:
             return url
-        if '/html/' in url:
-            paper_id = url.split('/html/')[-1].split('?')[0]
+        if "/html/" in url:
+            paper_id = url.split("/html/")[-1].split("?")[0]
             return f"https://arxiv.org/pdf/{paper_id}.pdf"
-        paper_id = url.split('/abs/')[-1].split('?')[0]
+        paper_id = url.split("/abs/")[-1].split("?")[0]
         return f"https://arxiv.org/pdf/{paper_id}.pdf"
 
     def _is_known_dynamic_site(self, url):
@@ -260,18 +264,19 @@ class WebToMarkdown:
         domain = parsed.netloc.lower()
 
         dynamic_domains = [
-            'x.com', 'twitter.com',
-            'medium.com',
-            'substack.com',
-            'github.com',
-            'reddit.com'
+            "x.com",
+            "twitter.com",
+            "medium.com",
+            "substack.com",
+            "github.com",
+            "reddit.com",
         ]
 
         for dynamic in dynamic_domains:
             if domain.endswith(dynamic):
                 return True
 
-        if 'weixin.qq.com' in domain:
+        if "weixin.qq.com" in domain:
             return False
 
         return None  # 未知，需要探测
@@ -279,14 +284,16 @@ class WebToMarkdown:
     def _probe_for_spa(self, url):
         """通过 HEAD 请求探测是否为 SPA（有网络调用）"""
         try:
-            response = self.session.head(url, timeout=self.TIMEOUT_HEAD, allow_redirects=True)
-            content_type = response.headers.get('content-type', '').lower()
+            response = self.session.head(
+                url, timeout=self.TIMEOUT_HEAD, allow_redirects=True
+            )
+            content_type = response.headers.get("content-type", "").lower()
 
-            if 'application/json' in content_type:
+            if "application/json" in content_type:
                 return True
 
-            server = response.headers.get('server', '').lower()
-            if any(s in server for s in ['nextjs', 'vercel', 'vite']):
+            server = response.headers.get("server", "").lower()
+            if any(s in server for s in ["nextjs", "vercel", "vite"]):
                 return True
         except Exception:
             return True
@@ -308,8 +315,8 @@ class WebToMarkdown:
         """
         response = self.session.get(url, timeout=self.TIMEOUT_REQUESTS)
         response.raise_for_status()
-        content_type = response.headers.get('content-type', '').lower()
-        is_pdf = 'application/pdf' in content_type or url.lower().endswith('.pdf')
+        content_type = response.headers.get("content-type", "").lower()
+        is_pdf = "application/pdf" in content_type or url.lower().endswith(".pdf")
         if is_pdf:
             return response.content, True
         return response.text, False
@@ -319,10 +326,7 @@ class WebToMarkdown:
         try:
             import fitz  # PyMuPDF
         except ImportError:
-            raise ImportError(
-                "PDF 处理需要 PyMuPDF。\n"
-                "请运行: pip install pymupdf"
-            )
+            raise ImportError("PDF 处理需要 PyMuPDF。\n" "请运行: pip install pymupdf")
 
         try:
             doc = fitz.open(stream=pdf_content, filetype="pdf")
@@ -342,13 +346,17 @@ class WebToMarkdown:
             # 提取标题
             title = None
             metadata = doc.metadata
-            if metadata and metadata.get('title'):
-                title = metadata['title']
+            if metadata and metadata.get("title"):
+                title = metadata["title"]
             elif doc.page_count > 0:
                 first_page = doc[0]
-                lines = [line.strip() for line in first_page.get_text().split('\n') if line.strip()]
+                lines = [
+                    line.strip()
+                    for line in first_page.get_text().split("\n")
+                    if line.strip()
+                ]
                 if lines:
-                    title = ' '.join(lines[:2])
+                    title = " ".join(lines[:2])
 
             if title:
                 return f"# {title}\n\n{text}"
@@ -371,13 +379,17 @@ class WebToMarkdown:
             page = browser.new_page()
 
             # 微信公众号使用移动 UA
-            if 'weixin.qq.com' in url:
-                page.set_extra_http_headers({
-                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0) AppleWebKit/605.1.15'
-                })
+            if "weixin.qq.com" in url:
+                page.set_extra_http_headers(
+                    {
+                        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0) AppleWebKit/605.1.15"
+                    }
+                )
 
             try:
-                page.goto(url, wait_until='networkidle', timeout=self.TIMEOUT_PLAYWRIGHT)
+                page.goto(
+                    url, wait_until="networkidle", timeout=self.TIMEOUT_PLAYWRIGHT
+                )
                 page.wait_for_timeout(2000)
                 content = page.content()
             finally:
@@ -387,17 +399,12 @@ class WebToMarkdown:
 
     def _to_markdown(self, html):
         """HTML 转 Markdown"""
-        soup = BeautifulSoup(html, 'html.parser')
+        soup = BeautifulSoup(html, "html.parser")
 
         # 提取标题（微信公众号等）
         title = None
         # 尝试多种标题来源
-        title_selectors = [
-            'title',
-            'h1#activity-name',
-            '.rich_media_title',
-            'h1'
-        ]
+        title_selectors = ["title", "h1#activity-name", ".rich_media_title", "h1"]
         for selector in title_selectors:
             title_elem = soup.select_one(selector)
             if title_elem:
@@ -408,13 +415,13 @@ class WebToMarkdown:
         # 查找正文内容（优先级）
         content_elem = None
         content_selectors = [
-            '#js_content',                    # 微信公众号
-            '.rich_media_content',            # 微信公众号
-            '#activity-detail',               # 微信公众号
-            'article',                        # 标准文章
-            'main',                           # 标准主内容
-            '.post-content',                  # 博客
-            '.article-content',               # 博客
+            "#js_content",  # 微信公众号
+            ".rich_media_content",  # 微信公众号
+            "#activity-detail",  # 微信公众号
+            "article",  # 标准文章
+            "main",  # 标准主内容
+            ".post-content",  # 博客
+            ".article-content",  # 博客
         ]
 
         for selector in content_selectors:
@@ -428,23 +435,40 @@ class WebToMarkdown:
             content_elem = soup.body or soup
 
         # 移除噪音元素
-        for tag in content_elem(['script', 'style', 'nav', 'footer', 'header', 'iframe', 'aside']):
+        for tag in content_elem(
+            ["script", "style", "nav", "footer", "header", "iframe", "aside"]
+        ):
             tag.decompose()
 
         # 移除广告和交互元素
-        for tag in content_elem.find_all(class_=lambda x: x and any(
-            w in x.lower() for w in ['ad', 'banner', 'cookie', 'consent', 'popup', 'modal', 'share', 'like', 'comment']
-        )):
+        for tag in content_elem.find_all(
+            class_=lambda x: x
+            and any(
+                w in x.lower()
+                for w in [
+                    "ad",
+                    "banner",
+                    "cookie",
+                    "consent",
+                    "popup",
+                    "modal",
+                    "share",
+                    "like",
+                    "comment",
+                ]
+            )
+        ):
             tag.decompose()
 
         # 移除按钮和链接区域
-        for tag in content_elem.find_all(class_=lambda x: x and any(
-            w in x.lower() for w in ['btn', 'button', 'share', 'reward']
-        )):
+        for tag in content_elem.find_all(
+            class_=lambda x: x
+            and any(w in x.lower() for w in ["btn", "button", "share", "reward"])
+        ):
             tag.decompose()
 
         # 移除空段落
-        for tag in content_elem.find_all('p'):
+        for tag in content_elem.find_all("p"):
             if not tag.get_text(strip=True):
                 tag.decompose()
 
@@ -458,25 +482,25 @@ class WebToMarkdown:
         markdown += md(cleaned_html, heading_style="ATX")
 
         # 清理多余空白
-        markdown = re.sub(r'\n{3,}', '\n\n', markdown)
-        markdown = re.sub(r' +\n', '\n', markdown)  # 行尾空格
+        markdown = re.sub(r"\n{3,}", "\n\n", markdown)
+        markdown = re.sub(r" +\n", "\n", markdown)  # 行尾空格
 
         return markdown.strip()
 
     def _to_plain_text(self, html):
         """提取纯文本"""
-        soup = BeautifulSoup(html, 'html.parser')
+        soup = BeautifulSoup(html, "html.parser")
 
-        main = soup.find('main') or soup.find('article') or soup.body
+        main = soup.find("main") or soup.find("article") or soup.body
         if not main:
-            return soup.get_text(separator='\n\n', strip=True)
+            return soup.get_text(separator="\n\n", strip=True)
 
-        for tag in main(['script', 'style', 'nav', 'footer', 'header', 'aside']):
+        for tag in main(["script", "style", "nav", "footer", "header", "aside"]):
             tag.decompose()
 
-        text = main.get_text(separator='\n\n', strip=True)
+        text = main.get_text(separator="\n\n", strip=True)
 
-        text = re.sub(r'\n{3,}', '\n\n', text)
+        text = re.sub(r"\n{3,}", "\n\n", text)
 
         return text.strip()
 
@@ -484,15 +508,13 @@ class WebToMarkdown:
 def main():
     """命令行入口"""
     logging.basicConfig(
-        level=logging.INFO,
-        format='%(levelname)s: %(message)s',
-        stream=sys.stderr,
+        level=logging.INFO, format="%(levelname)s: %(message)s", stream=sys.stderr,
     )
 
     parser = argparse.ArgumentParser(
-        description='将网页转换为 Markdown 格式（优先使用非Python方法）',
+        description="将网页转换为 Markdown 格式（优先使用非Python方法）",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='''优先级方法:
+        epilog="""优先级方法:
   1. Jina Reader API (https://r.jina.ai/URL) - 零安装
   2. Firecrawl API (需要 FIRECRAWL_API_KEY)
   3. Python实现 (回退)
@@ -502,24 +524,22 @@ def main():
   %(prog)s https://arxiv.org/abs/2601.04500v1 --output paper.md
   %(prog)s https://x.com/user/status/123 --pure-text
   %(prog)s https://www.breezedeus.com/article/ai-agent-context-engineering --use-python  # 强制使用Python方法
-        '''
+        """,
     )
 
-    parser.add_argument('url', help='要转换的网页 URL')
-    parser.add_argument('--pure-text', action='store_true',
-                       help='输出纯文本（无 Markdown 格式）')
-    parser.add_argument('--use-python', action='store_true',
-                       help='强制使用Python方法（跳过Jina/Firecrawl）')
-    parser.add_argument('--output', '-o', help='输出到文件')
+    parser.add_argument("url", help="要转换的网页 URL")
+    parser.add_argument("--pure-text", action="store_true", help="输出纯文本（无 Markdown 格式）")
+    parser.add_argument(
+        "--use-python", action="store_true", help="强制使用Python方法（跳过Jina/Firecrawl）",
+    )
+    parser.add_argument("--output", "-o", help="输出到文件")
 
     args = parser.parse_args()
 
     try:
         with WebToMarkdown() as converter:
             result = converter.convert(
-                args.url,
-                pure_text=args.pure_text,
-                use_python=args.use_python
+                args.url, pure_text=args.pure_text, use_python=args.use_python
             )
 
             if result is None:
@@ -527,7 +547,7 @@ def main():
                 sys.exit(1)
 
             if args.output:
-                with open(args.output, 'w', encoding='utf-8') as f:
+                with open(args.output, "w", encoding="utf-8") as f:
                     f.write(result)
                 print(f"✓ 已保存到: {args.output}")
             else:
@@ -538,5 +558,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,4 +1,5 @@
 """Tests for docai-web2summary summarize module."""
+
 import sys
 from pathlib import Path
 
@@ -14,7 +15,9 @@ class TestBuildSummaryPrompt:
 
     def test_prompt_contains_content(self):
         summarizer = URLSummarizer()
-        prompt = summarizer.build_summary_prompt("# Test Content", "https://example.com")
+        prompt = summarizer.build_summary_prompt(
+            "# Test Content", "https://example.com"
+        )
         assert "# Test Content" in prompt
 
     def test_prompt_loads_from_template(self):

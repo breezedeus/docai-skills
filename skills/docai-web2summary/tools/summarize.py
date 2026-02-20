@@ -41,7 +41,9 @@ class URLSummarizer:
 
     def convert_to_markdown(self, url):
         """使用 docai-web2md 转换 URL 为 Markdown"""
-        convert_script = self.repo_root / "skills" / "docai-web2md" / "tools" / "convert.py"
+        convert_script = (
+            self.repo_root / "skills" / "docai-web2md" / "tools" / "convert.py"
+        )
 
         if not convert_script.exists():
             raise FileNotFoundError(f"转换脚本不存在: {convert_script}")
@@ -52,7 +54,7 @@ class URLSummarizer:
                 [sys.executable, str(convert_script), url],
                 capture_output=True,
                 text=True,
-                timeout=self.TIMEOUT_CONVERT
+                timeout=self.TIMEOUT_CONVERT,
             )
 
             if result.returncode != 0:
@@ -63,7 +65,7 @@ class URLSummarizer:
                         [sys.executable, str(convert_script), url, "--use-python"],
                         capture_output=True,
                         text=True,
-                        timeout=self.TIMEOUT_CONVERT_RETRY
+                        timeout=self.TIMEOUT_CONVERT_RETRY,
                     )
                     if result.returncode != 0:
                         raise Exception(f"转换失败: {result.stderr}")
@@ -80,7 +82,7 @@ class URLSummarizer:
     def build_summary_prompt(self, markdown_content, url):
         """构建总结提示词（从模板文件加载）"""
         template_path = self.script_dir / "prompts" / "summary_prompt.txt"
-        template = template_path.read_text(encoding='utf-8')
+        template = template_path.read_text(encoding="utf-8")
         return template.format(markdown_content=markdown_content)
 
     def summarize_with_ai(self, markdown_content, url, model=None):
@@ -96,10 +98,7 @@ class URLSummarizer:
             cmd.extend(["-p", prompt])
 
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=self.TIMEOUT_AI
+                cmd, capture_output=True, text=True, timeout=self.TIMEOUT_AI
             )
 
             if result.returncode == 0:
@@ -139,8 +138,10 @@ class URLSummarizer:
 
         # 步骤2：内容截断保护
         if len(markdown) > self.MAX_CONTENT_LENGTH:
-            logger.warning("内容过长 (%d 字符)，截断至 %d 字符", len(markdown), self.MAX_CONTENT_LENGTH)
-            markdown = markdown[:self.MAX_CONTENT_LENGTH] + "\n\n[... 内容已截断 ...]"
+            logger.warning(
+                "内容过长 (%d 字符)，截断至 %d 字符", len(markdown), self.MAX_CONTENT_LENGTH,
+            )
+            markdown = markdown[: self.MAX_CONTENT_LENGTH] + "\n\n[... 内容已截断 ...]"
 
         # 步骤3：AI 总结
         logger.info("正在进行 AI 总结...")
@@ -158,23 +159,21 @@ class URLSummarizer:
 def main():
     """命令行入口"""
     logging.basicConfig(
-        level=logging.INFO,
-        format='%(levelname)s: %(message)s',
-        stream=sys.stderr,
+        level=logging.INFO, format="%(levelname)s: %(message)s", stream=sys.stderr,
     )
 
     parser = argparse.ArgumentParser(
-        description='URL 内容总结工具（转换 + AI 总结）',
+        description="URL 内容总结工具（转换 + AI 总结）",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='''示例:
+        epilog="""示例:
   %(prog)s https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA
   %(prog)s https://arxiv.org/abs/2601.04500v1 --model sonnet --output summary.md
-        '''
+        """,
     )
 
-    parser.add_argument('url', help='要总结的网页 URL')
-    parser.add_argument('--model', help='指定 AI 模型（如 sonnet, haiku）')
-    parser.add_argument('--output', '-o', help='输出到文件')
+    parser.add_argument("url", help="要总结的网页 URL")
+    parser.add_argument("--model", help="指定 AI 模型（如 sonnet, haiku）")
+    parser.add_argument("--output", "-o", help="输出到文件")
 
     args = parser.parse_args()
 
@@ -187,7 +186,7 @@ def main():
             sys.exit(1)
 
         if args.output:
-            with open(args.output, 'w', encoding='utf-8') as f:
+            with open(args.output, "w", encoding="utf-8") as f:
                 f.write(result)
             logger.info("已保存到: %s", args.output)
         else:
@@ -198,5 +197,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
