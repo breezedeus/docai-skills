@@ -96,8 +96,11 @@ class WebToMarkdown:
         if self._is_arxiv(url):
             url = self._convert_arxiv_to_html(url)
 
-        # 微信公众号：直接使用 Python 方法
+        # 微信公众号：优先使用 Playwright（需要 JS 渲染），失败则回退 Python 方法
         if self._is_wechat(url):
+            result = self._try_playwright(url, pure_text)
+            if result:
+                return result
             return self._python_convert(url, pure_text)
 
         # 强制 Python 模式
@@ -120,7 +123,7 @@ class WebToMarkdown:
     def _parallel_convert(self, url, pure_text):
         """并行尝试多种方法，返回最快成功的结果"""
         futures = {}
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             futures[executor.submit(self._try_jina_reader, url, pure_text)] = "jina"
 
             if self.firecrawl_api_key:
@@ -129,6 +132,9 @@ class WebToMarkdown:
                 )
 
             futures[executor.submit(self._python_convert, url, pure_text)] = "python"
+            futures[executor.submit(self._try_playwright, url, pure_text)] = (
+                "playwright"
+            )
 
             for future in as_completed(futures):
                 try:
@@ -187,6 +193,19 @@ class WebToMarkdown:
                 logger.warning("Firecrawl 错误: %s", response.status_code)
         except Exception as e:
             logger.warning("Firecrawl 失败: %s", e)
+        return None
+
+    def _try_playwright(self, url, pure_text):
+        """尝试使用 Playwright 获取动态页面"""
+        try:
+            content = self._get_with_playwright(url)
+            if not content or len(content.strip()) < 50:
+                return None
+            if pure_text:
+                return self._to_plain_text(content)
+            return self._to_markdown(content)
+        except Exception as e:
+            logger.warning("Playwright 失败: %s", e)
         return None
 
     def _python_convert(self, url, pure_text):

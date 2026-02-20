@@ -41,12 +41,13 @@ python skills/docai-web2md/tools/convert.py https://example.com --use-python
 ```
 
 ## What It Does
-Three methods run in parallel, returning the first successful result:
+Four methods run in parallel, returning the first successful result:
 1. Jina Reader API (fastest, zero install)
 2. Firecrawl API (if key configured)
-3. Python fallback (requests + BeautifulSoup + Playwright for SPAs)
+3. Python fallback (requests + BeautifulSoup)
+4. Playwright (headless browser for JS-rendered pages)
 
-Special cases handled automatically: WeChat → Python direct, arXiv → HTML priority, Twitter/X → Playwright.
+Special cases handled automatically: WeChat → Playwright first (mobile UA, JS rendering), arXiv → HTML priority, Twitter/X → Playwright.
 
 ## Troubleshooting
 - **arXiv PDF garbled**: Requires `pymupdf` — `pip install pymupdf`

@@ -204,7 +204,8 @@ class TestParallelConvert:
     @patch.object(WebToMarkdown, "_try_jina_reader", return_value="# Jina")
     @patch.object(WebToMarkdown, "_try_firecrawl", return_value=None)
     @patch.object(WebToMarkdown, "_python_convert", return_value="# Python")
-    def test_returns_first_success(self, _py, _fc, _jina):
+    @patch.object(WebToMarkdown, "_try_playwright", return_value=None)
+    def test_returns_first_success(self, _pw, _py, _fc, _jina):
         converter = WebToMarkdown()
         result = converter._parallel_convert("https://example.com", False)
         assert result is not None
@@ -212,7 +213,74 @@ class TestParallelConvert:
     @patch.object(WebToMarkdown, "_try_jina_reader", return_value=None)
     @patch.object(WebToMarkdown, "_try_firecrawl", return_value=None)
     @patch.object(WebToMarkdown, "_python_convert", return_value=None)
-    def test_all_fail_returns_none(self, _py, _fc, _jina):
+    @patch.object(WebToMarkdown, "_try_playwright", return_value=None)
+    def test_all_fail_returns_none(self, _pw, _py, _fc, _jina):
         converter = WebToMarkdown()
         result = converter._parallel_convert("https://example.com", False)
         assert result is None
+
+    @patch.object(WebToMarkdown, "_try_jina_reader", return_value=None)
+    @patch.object(WebToMarkdown, "_try_firecrawl", return_value=None)
+    @patch.object(WebToMarkdown, "_python_convert", return_value=None)
+    @patch.object(WebToMarkdown, "_try_playwright", return_value="# Playwright")
+    def test_playwright_fallback_succeeds(self, _pw, _py, _fc, _jina):
+        converter = WebToMarkdown()
+        result = converter._parallel_convert("https://example.com", False)
+        assert result == "# Playwright"
+
+
+class TestTryPlaywright:
+    """测试 Playwright 方法"""
+
+    @patch.object(WebToMarkdown, "_get_with_playwright", return_value="<html><body><h1>Title</h1><p>Content</p></body></html>")
+    def test_returns_markdown(self, _gp):
+        converter = WebToMarkdown()
+        result = converter._try_playwright("https://example.com", False)
+        assert result is not None
+        assert "Title" in result
+        assert "Content" in result
+
+    @patch.object(WebToMarkdown, "_get_with_playwright", return_value="<html><body><h1>Title</h1><p>Content</p></body></html>")
+    def test_returns_plain_text(self, _gp):
+        converter = WebToMarkdown()
+        result = converter._try_playwright("https://example.com", True)
+        assert result is not None
+        assert "Content" in result
+
+    @patch.object(WebToMarkdown, "_get_with_playwright", return_value="")
+    def test_empty_content_returns_none(self, _gp):
+        converter = WebToMarkdown()
+        result = converter._try_playwright("https://example.com", False)
+        assert result is None
+
+    @patch.object(WebToMarkdown, "_get_with_playwright", side_effect=ImportError("Playwright not installed"))
+    def test_import_error_returns_none(self, _gp):
+        converter = WebToMarkdown()
+        result = converter._try_playwright("https://example.com", False)
+        assert result is None
+
+    @patch.object(WebToMarkdown, "_get_with_playwright", side_effect=Exception("connection error"))
+    def test_exception_returns_none(self, _gp):
+        converter = WebToMarkdown()
+        result = converter._try_playwright("https://example.com", False)
+        assert result is None
+
+
+class TestWechatPlaywright:
+    """测试微信公众号使用 Playwright"""
+
+    @patch.object(WebToMarkdown, "_try_playwright", return_value="# 微信文章")
+    def test_wechat_uses_playwright(self, mock_playwright):
+        converter = WebToMarkdown()
+        result = converter.convert("https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA")
+        mock_playwright.assert_called_once()
+        assert result == "# 微信文章"
+
+    @patch.object(WebToMarkdown, "_try_playwright", return_value=None)
+    @patch.object(WebToMarkdown, "_python_convert", return_value="# Python fallback")
+    def test_wechat_falls_back_to_python(self, mock_python, mock_playwright):
+        converter = WebToMarkdown()
+        result = converter.convert("https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA")
+        mock_playwright.assert_called_once()
+        mock_python.assert_called_once()
+        assert result == "# Python fallback"
