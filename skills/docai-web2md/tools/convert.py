@@ -23,32 +23,59 @@ arXiv 特殊处理：
 
 import sys
 import argparse
+import logging
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 from urllib.parse import urlparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
 import os
 
+logger = logging.getLogger(__name__)
+
 
 class WebToMarkdown:
-    """网页转 Markdown 转换器（优先级方法）"""
+    """网页转 Markdown 转换器（并行优先级方法）"""
+
+    # 超时常量（秒）
+    TIMEOUT_HEAD = 3
+    TIMEOUT_JINA = 8
+    TIMEOUT_FIRECRAWL = 10
+    TIMEOUT_REQUESTS = 15
+    TIMEOUT_PLAYWRIGHT = 15000  # 毫秒
 
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (compatible; DocAI-Converter/1.0)'
         })
+        # 配置重试策略：仅针对 429/5xx，最多 2 次，指数退避
+        retry = Retry(
+            total=2,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["HEAD", "GET", "POST"],
+        )
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
         # 从环境变量获取 Firecrawl API 密钥
         self.firecrawl_api_key = os.environ.get('FIRECRAWL_API_KEY')
 
-    def convert(self, url, pure_text=False, use_python=False):
-        """转换 URL 到 Markdown（优先级方法）
+    def __enter__(self):
+        return self
 
-        优先级：
-        1. Jina Reader API (如果可用，微信公众号除外)
-        2. Firecrawl API (如果有API密钥)
-        3. Python实现 (回退)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.session.close()
+
+    def convert(self, url, pure_text=False, use_python=False):
+        """转换 URL 到 Markdown（并行优先级方法）
+
+        并行发起 Jina Reader / Firecrawl / Python，取最快成功的结果。
+        微信公众号和 --use-python 模式走直连路径。
 
         Args:
             url: 网页 URL
@@ -60,6 +87,11 @@ class WebToMarkdown:
         """
         url = url.strip()
 
+        # URL 校验
+        parsed = urlparse(url)
+        if parsed.scheme not in ('http', 'https') or not parsed.netloc:
+            raise ValueError(f"无效的 URL: {url}")
+
         # arXiv 特殊处理：转换为 HTML URL
         if self._is_arxiv(url):
             url = self._convert_arxiv_to_html(url)
@@ -68,24 +100,44 @@ class WebToMarkdown:
         if self._is_wechat(url):
             return self._python_convert(url, pure_text)
 
-        # 非Python方法优先（除非强制使用Python）
-        if not use_python:
-            # 方法1: Jina Reader API
-            result = self._try_jina_reader(url, pure_text)
-            if result:
-                return result
+        # 强制 Python 模式
+        if use_python:
+            if self._is_arxiv(url):
+                return self._handle_arxiv(url, pure_text)
+            return self._python_convert(url, pure_text)
 
-            # 方法2: Firecrawl API
-            result = self._try_firecrawl(url, pure_text)
-            if result:
-                return result
+        # 并行发起多种方法，取最快成功的
+        result = self._parallel_convert(url, pure_text)
+        if result:
+            return result
 
-        # 方法3: Python实现（回退）
-        # 如果是 arXiv HTML URL，回退时尝试 PDF
+        # 所有并行方法都失败，arXiv 尝试 PDF 回退
         if self._is_arxiv(url):
             return self._handle_arxiv(url, pure_text)
 
-        return self._python_convert(url, pure_text)
+        return None
+
+    def _parallel_convert(self, url, pure_text):
+        """并行尝试多种方法，返回最快成功的结果"""
+        futures = {}
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures[executor.submit(self._try_jina_reader, url, pure_text)] = 'jina'
+
+            if self.firecrawl_api_key:
+                futures[executor.submit(self._try_firecrawl, url, pure_text)] = 'firecrawl'
+
+            futures[executor.submit(self._python_convert, url, pure_text)] = 'python'
+
+            for future in as_completed(futures):
+                try:
+                    result = future.result()
+                except Exception:
+                    continue
+                if result:
+                    for f in futures:
+                        f.cancel()
+                    return result
+        return None
 
     def _try_jina_reader(self, url, pure_text):
         """尝试使用 Jina Reader API
@@ -94,7 +146,7 @@ class WebToMarkdown:
         """
         try:
             jina_url = f"https://r.jina.ai/{url}"
-            response = self.session.get(jina_url, timeout=15)
+            response = self.session.get(jina_url, timeout=self.TIMEOUT_JINA)
             response.raise_for_status()
 
             content = response.text
@@ -104,13 +156,13 @@ class WebToMarkdown:
                 # Jina 已经返回不错的 Markdown，稍作清理即可
                 return self._clean_jina_markdown(content)
         except Exception as e:
-            print(f"Jina Reader 失败: {e}", file=sys.stderr)
+            logger.warning("Jina Reader 失败: %s", e)
         return None
 
     def _try_firecrawl(self, url, pure_text):
         """尝试使用 Firecrawl API"""
         if not self.firecrawl_api_key:
-            print("Firecrawl API 密钥未设置 (FIRECRAWL_API_KEY)", file=sys.stderr)
+            logger.info("Firecrawl API 密钥未设置 (FIRECRAWL_API_KEY)")
             return None
 
         try:
@@ -118,7 +170,7 @@ class WebToMarkdown:
                 "https://api.firecrawl.dev/v0/scrape",
                 headers={"Authorization": f"Bearer {self.firecrawl_api_key}"},
                 json={"url": url, "formats": ["markdown"]},
-                timeout=30
+                timeout=self.TIMEOUT_FIRECRAWL
             )
 
             if response.status_code == 200:
@@ -130,33 +182,24 @@ class WebToMarkdown:
                         return re.sub(r'[\*\#\`\[\]\(\)]', '', markdown)
                     return markdown
             else:
-                print(f"Firecrawl 错误: {response.status_code}", file=sys.stderr)
+                logger.warning("Firecrawl 错误: %s", response.status_code)
         except Exception as e:
-            print(f"Firecrawl 失败: {e}", file=sys.stderr)
+            logger.warning("Firecrawl 失败: %s", e)
         return None
 
     def _python_convert(self, url, pure_text):
         """Python实现（回退方法）"""
-        is_pdf = url.lower().endswith('.pdf')
-
         # 自动检测是否需要浏览器
         use_browser = self._needs_browser(url)
 
         if use_browser:
             content = self._get_with_playwright(url)
+            is_pdf = False
         else:
-            content = self._get_with_requests(url)
+            content, is_pdf = self._get_with_requests(url)
 
-        # PDF 特殊处理
         if is_pdf:
-            if pure_text:
-                return self._extract_pdf_text(content)
-            else:
-                title = self._extract_pdf_title(content)
-                text = self._extract_pdf_text(content)
-                if title:
-                    return f"# {title}\n\n{text}"
-                return text
+            return self._process_pdf(content, pure_text)
 
         # HTML 转换
         if pure_text:
@@ -166,23 +209,13 @@ class WebToMarkdown:
 
     def _handle_arxiv(self, url, pure_text):
         """arXiv Python回退方法：从HTML URL转为PDF下载"""
-        # 此时 url 是 arXiv HTML URL
         try:
-            # 转换为 PDF URL
             pdf_url = self._convert_arxiv_to_pdf(url)
-            print(f"arXiv Python回退: 下载PDF {pdf_url}", file=sys.stderr)
-            pdf_content = self._get_with_requests(pdf_url)
-
-            if pure_text:
-                return self._extract_pdf_text(pdf_content)
-            else:
-                title = self._extract_pdf_title(pdf_content)
-                text = self._extract_pdf_text(pdf_content)
-                if title:
-                    return f"# {title}\n\n{text}"
-                return text
+            logger.info("arXiv Python回退: 下载PDF %s", pdf_url)
+            pdf_content, _ = self._get_with_requests(pdf_url)
+            return self._process_pdf(pdf_content, pure_text)
         except Exception as e:
-            print(f"arXiv PDF失败: {e}", file=sys.stderr)
+            logger.error("arXiv PDF失败: %s", e)
             return None
 
     def _clean_jina_markdown(self, markdown):
@@ -221,12 +254,11 @@ class WebToMarkdown:
         paper_id = url.split('/abs/')[-1].split('?')[0]
         return f"https://arxiv.org/pdf/{paper_id}.pdf"
 
-    def _needs_browser(self, url):
-        """自动检测是否需要浏览器渲染"""
+    def _is_known_dynamic_site(self, url):
+        """检测是否为已知的动态网站（纯函数，无网络调用）"""
         parsed = urlparse(url)
         domain = parsed.netloc.lower()
 
-        # 已知的动态网站（需要浏览器）
         dynamic_domains = [
             'x.com', 'twitter.com',
             'medium.com',
@@ -239,13 +271,15 @@ class WebToMarkdown:
             if domain.endswith(dynamic):
                 return True
 
-        # 微信公众号：尝试先用 requests，如果失败再用浏览器
         if 'weixin.qq.com' in domain:
-            return False  # 先尝试静态请求
+            return False
 
-        # 快速检测 SPA
+        return None  # 未知，需要探测
+
+    def _probe_for_spa(self, url):
+        """通过 HEAD 请求探测是否为 SPA（有网络调用）"""
         try:
-            response = self.session.head(url, timeout=5, allow_redirects=True)
+            response = self.session.head(url, timeout=self.TIMEOUT_HEAD, allow_redirects=True)
             content_type = response.headers.get('content-type', '').lower()
 
             if 'application/json' in content_type:
@@ -254,23 +288,34 @@ class WebToMarkdown:
             server = response.headers.get('server', '').lower()
             if any(s in server for s in ['nextjs', 'vercel', 'vite']):
                 return True
-        except:
+        except Exception:
             return True
 
         return False
 
+    def _needs_browser(self, url):
+        """自动检测是否需要浏览器渲染"""
+        known = self._is_known_dynamic_site(url)
+        if known is not None:
+            return known
+        return self._probe_for_spa(url)
+
     def _get_with_requests(self, url):
-        """使用 requests 获取静态页面或 PDF"""
-        response = self.session.get(url, timeout=30)
+        """使用 requests 获取静态页面或 PDF
+
+        Returns:
+            tuple: (content, is_pdf) - content 为 bytes(PDF) 或 str(HTML)
+        """
+        response = self.session.get(url, timeout=self.TIMEOUT_REQUESTS)
         response.raise_for_status()
-        # 检查是否是 PDF
         content_type = response.headers.get('content-type', '').lower()
-        if 'application/pdf' in content_type or url.lower().endswith('.pdf'):
-            return response.content  # 返回二进制内容
-        return response.text
+        is_pdf = 'application/pdf' in content_type or url.lower().endswith('.pdf')
+        if is_pdf:
+            return response.content, True
+        return response.text, False
 
-    def _extract_pdf_title(self, pdf_content):
-        """从 PDF 提取标题"""
+    def _process_pdf(self, pdf_content, pure_text=False):
+        """处理 PDF 内容，返回 Markdown 或纯文本（只打开一次文档）"""
         try:
             import fitz  # PyMuPDF
         except ImportError:
@@ -281,45 +326,35 @@ class WebToMarkdown:
 
         try:
             doc = fitz.open(stream=pdf_content, filetype="pdf")
-            # 尝试从元数据获取标题
-            metadata = doc.metadata
-            if metadata and metadata.get('title'):
-                return metadata['title']
 
-            # 如果没有元数据，从第一页提取
-            if doc.page_count > 0:
-                first_page = doc[0]
-                text = first_page.get_text()
-                # 取前几行作为标题候选
-                lines = [line.strip() for line in text.split('\n') if line.strip()]
-                if lines:
-                    # 通常标题是第一行或前两行
-                    return ' '.join(lines[:2])
-            return None
-        except Exception:
-            return None
-
-    def _extract_pdf_text(self, pdf_content):
-        """从 PDF 二进制内容提取纯文本"""
-        try:
-            import fitz  # PyMuPDF
-        except ImportError:
-            raise ImportError(
-                "PDF 处理需要 PyMuPDF。\n"
-                "请运行: pip install pymupdf"
-            )
-
-        try:
-            doc = fitz.open(stream=pdf_content, filetype="pdf")
+            # 提取全文
             text = ""
             for page_num, page in enumerate(doc):
                 page_text = page.get_text()
                 if page_text.strip():
                     text += f"--- Page {page_num + 1} ---\n\n"
                     text += page_text + "\n\n"
-            return text.strip()
+            text = text.strip()
+
+            if pure_text:
+                return text
+
+            # 提取标题
+            title = None
+            metadata = doc.metadata
+            if metadata and metadata.get('title'):
+                title = metadata['title']
+            elif doc.page_count > 0:
+                first_page = doc[0]
+                lines = [line.strip() for line in first_page.get_text().split('\n') if line.strip()]
+                if lines:
+                    title = ' '.join(lines[:2])
+
+            if title:
+                return f"# {title}\n\n{text}"
+            return text
         except Exception as e:
-            raise Exception(f"PDF 文本提取失败: {e}")
+            raise Exception(f"PDF 处理失败: {e}")
 
     def _get_with_playwright(self, url):
         """使用 Playwright 获取动态页面"""
@@ -342,7 +377,7 @@ class WebToMarkdown:
                 })
 
             try:
-                page.goto(url, wait_until='networkidle', timeout=30000)
+                page.goto(url, wait_until='networkidle', timeout=self.TIMEOUT_PLAYWRIGHT)
                 page.wait_for_timeout(2000)
                 content = page.content()
             finally:
@@ -359,7 +394,6 @@ class WebToMarkdown:
         # 尝试多种标题来源
         title_selectors = [
             'title',
-            'h1#activity-name',
             'h1#activity-name',
             '.rich_media_title',
             'h1'
@@ -434,6 +468,8 @@ class WebToMarkdown:
         soup = BeautifulSoup(html, 'html.parser')
 
         main = soup.find('main') or soup.find('article') or soup.body
+        if not main:
+            return soup.get_text(separator='\n\n', strip=True)
 
         for tag in main(['script', 'style', 'nav', 'footer', 'header', 'aside']):
             tag.decompose()
@@ -447,6 +483,12 @@ class WebToMarkdown:
 
 def main():
     """命令行入口"""
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(levelname)s: %(message)s',
+        stream=sys.stderr,
+    )
+
     parser = argparse.ArgumentParser(
         description='将网页转换为 Markdown 格式（优先使用非Python方法）',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -473,26 +515,26 @@ def main():
     args = parser.parse_args()
 
     try:
-        converter = WebToMarkdown()
-        result = converter.convert(
-            args.url,
-            pure_text=args.pure_text,
-            use_python=args.use_python
-        )
+        with WebToMarkdown() as converter:
+            result = converter.convert(
+                args.url,
+                pure_text=args.pure_text,
+                use_python=args.use_python
+            )
 
-        if result is None:
-            print("✗ 转换失败：所有方法均不可用", file=sys.stderr)
-            sys.exit(1)
+            if result is None:
+                logger.error("转换失败：所有方法均不可用")
+                sys.exit(1)
 
-        if args.output:
-            with open(args.output, 'w', encoding='utf-8') as f:
-                f.write(result)
-            print(f"✓ 已保存到: {args.output}")
-        else:
-            print(result)
+            if args.output:
+                with open(args.output, 'w', encoding='utf-8') as f:
+                    f.write(result)
+                print(f"✓ 已保存到: {args.output}")
+            else:
+                print(result)
 
     except Exception as e:
-        print(f"✗ 错误: {e}", file=sys.stderr)
+        logger.error("错误: %s", e)
         sys.exit(1)
 
 
