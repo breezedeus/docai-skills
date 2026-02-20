@@ -6,12 +6,12 @@
   },
   "metadata": {
     "description": "Document AI skills for web content conversion and processing",
-    "version": "1.0.2"
+    "version": "1.1.0"
   },
   "plugins": [
     {
       "name": "docai-skills",
-      "description": "Collection of document AI skills including web to Markdown conversion with priority-based methods (Jina Reader, Firecrawl, Python fallback)",
+      "description": "Collection of document AI skills including web to Markdown conversion with parallel methods (Jina Reader, Firecrawl, Python) and adaptive AI summarization",
       "source": "./",
       "strict": false,
       "skills": [
