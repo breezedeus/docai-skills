@@ -1,5 +1,37 @@
 # 更新日志
 
+## 2026-02-20 - v1.2.0: 新增 Playwright 并行方法 & 微信公众号优化
+
+### Playwright 作为第四并行获取方法
+
+**修改文件**: `skills/docai-web2md/tools/convert.py`
+
+将 Playwright 从内部实现细节提升为独立的并行方法 `_try_playwright`，与 Jina Reader、Firecrawl、Python 并列，并行竞速取最快成功的结果。
+
+**并行方法（四路）**：
+1. Jina Reader API（最快，零安装）
+2. Firecrawl API（需要密钥）
+3. Python/requests（静态页面）
+4. Playwright（JS 渲染，新增）
+
+### 微信公众号优化
+
+**问题**: 微信公众号文章依赖 JavaScript 渲染，纯 `requests` 方法经常无法获取内容。
+
+**解决方案**: 微信公众号优先使用 Playwright（自动设置移动端 User-Agent），失败再回退到 Python 方法。
+
+```python
+# 之前: WeChat → _python_convert（requests，经常失败）
+# 之后: WeChat → _try_playwright（移动端 UA）→ _python_convert（回退）
+```
+
+### 测试
+
+- 新增 8 个单元测试，覆盖 `_try_playwright` 及微信路由逻辑
+- 全部 39 个测试通过
+
+---
+
 ## 2026-02-20 - v1.1.0: 架构优化 & 自适应总结
 
 ### 并行获取加速
