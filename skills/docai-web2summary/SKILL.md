@@ -1,14 +1,15 @@
 ---
 name: docai-web2summary
-description: Use when needing to summarize web content. Runs summarize.py to convert URL to Markdown and generate structured AI summary with core insights, technical details, and performance metrics.
+description: Use when needing to summarize web content. Runs summarize.py to convert URL to Markdown and generate AI summary with adaptive structure based on content type (paper, news, tutorial, product, AI news, general).
 ---
 
 # docai:web2summary
 
 ## Overview
 This skill automatically converts web pages to structured AI summaries:
-1. **Converts URL → Markdown** using docai-web2md (Jina Reader → Firecrawl → Python)
-2. **Generates AI summary** with standardized format
+1. **Converts URL → Markdown** using docai-web2md (parallel: Jina Reader / Firecrawl / Python)
+2. **Detects content type** (paper, news, tutorial, product, AI news, general)
+3. **Generates AI summary** with type-specific structure
 
 **Use when**: User says "summarize this URL", "总结这个链接", "请总结这个文章"
 
@@ -32,21 +33,20 @@ uv pip install --system requests beautifulsoup4 markdownify pymupdf
 pip install requests beautifulsoup4 markdownify pymupdf
 ```
 
-## Output Format
+## Output Format (Adaptive by Content Type)
 ```markdown
 # **标题 | 机构名称**
 
 ✔ 一句话总结
 
-✔ **核心洞见**：深度分析
+（以下章节根据内容类型自动选择）
 
-✔ **技术细节/架构创新**：具体实现
-
-✔ **性能数据/实验结果**：具体数字
-
-✔ **应用场景**：实际使用
-
-✔ **长期意义/游戏规则改变者**：深层影响
+技术论文 → 核心洞见、技术细节、性能数据、应用场景、长期意义
+新闻报道 → 核心事件、关键人物/机构、背景与影响、后续展望
+教程指南 → 学习目标、前置条件、关键步骤、注意事项
+产品评测 → 产品定位、核心功能、竞品对比、适用人群
+AI 动态 → 核心动态、技术要点、行业影响、值得关注的信号
+通用 → 核心内容、关键要点、价值与启发
 
 **原文：** <链接>
 ```

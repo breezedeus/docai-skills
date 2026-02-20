@@ -1,15 +1,17 @@
 ---
 name: docai-web2md
-description: Use when needing to convert web pages to Markdown format. Uses priority-based approach (Jina Reader → Firecrawl → Python) to handle static blogs, dynamic pages, social media, and arXiv papers.
+description: Use when needing to convert web pages to Markdown format. Uses parallel approach (Jina Reader / Firecrawl / Python simultaneously) to handle static blogs, dynamic pages, social media, and arXiv papers.
 ---
 
 # docai:web2md
 
 ## Overview
-Converts web pages to Markdown with automatic priority-based method selection:
-1. **Jina Reader API** (fastest, zero install) - except WeChat
-2. **Firecrawl API** (advanced crawling)
-3. **Python fallback** (when APIs unavailable)
+Converts web pages to Markdown with parallel method execution:
+- **Jina Reader API** (fastest, zero install)
+- **Firecrawl API** (advanced crawling)
+- **Python fallback** (when APIs unavailable)
+
+All three methods run in parallel, returning the first successful result.
 
 **Special handling**: WeChat articles → Python directly (best results)
 
