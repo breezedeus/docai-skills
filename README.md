@@ -32,6 +32,8 @@
 - arXiv 论文（HTML 优先，PDF 回退）
 - 纯文本模式
 
+**转换方式：** 并行发起 Jina Reader / Firecrawl / Python，取最快成功的结果。
+
 **安装 Python 依赖（仅用于回退方法）：**
 ```bash
 pip install requests beautifulsoup4 markdownify pymupdf
@@ -45,7 +47,7 @@ pip install requests beautifulsoup4 markdownify pymupdf
 **测试结果：**
 - ✅ arXiv 论文：HTML 优先，~1-3 秒
 - ✅ 静态博客：Jina Reader，~1-2 秒
-- ✅ 微信公众号：Jina → Python，~2-5 秒
+- ✅ 微信公众号：Python 直连，~2-5 秒
 - ✅ 动态页面：Python，~5-10 秒
 
 **详见：** [skills/docai-web2md/README.md](skills/docai-web2md/README.md) | [使用指南](skills/docai-web2md/SKILL.md)
@@ -58,8 +60,8 @@ pip install requests beautifulsoup4 markdownify pymupdf
 
 **核心功能：**
 - 🔄 自动转换网页为 Markdown
-- 🤖 AI 生成标准化格式总结
-- 📋 包含核心洞见、技术细节、性能数据等
+- 🤖 AI 自动判断内容类型，生成对应结构的总结
+- 📋 支持六种内容类型：技术论文、新闻报道、教程指南、产品评测、AI 动态、通用
 - 💾 支持直接保存到文件
 
 **使用：**
@@ -71,16 +73,21 @@ python skills/docai-web2summary/tools/summarize.py https://mp.weixin.qq.com/s/..
 python skills/docai-web2summary/tools/summarize.py https://arxiv.org/abs/2601.04500v1 --model sonnet -o summary.md
 ```
 
-**输出格式：**
+**输出格式（根据内容类型自适应）：**
 ```
 # **标题 | 机构名称**
 
 ✔ 一句话总结
-✔ **核心洞见**：深度分析
-✔ **技术细节/架构创新**：具体实现
-✔ **性能数据/实验结果**：具体数字
-✔ **应用场景**：实际使用场景
-✔ **长期意义/游戏规则改变者**：深层影响
+
+（以下章节根据内容类型自动选择）
+✔ 技术论文 → 核心洞见、技术细节、性能数据、应用场景、长期意义
+✔ 新闻报道 → 核心事件、关键人物/机构、背景与影响、后续展望
+✔ 教程指南 → 学习目标、前置条件、关键步骤、注意事项
+✔ 产品评测 → 产品定位、核心功能、竞品对比、适用人群
+✔ AI 动态 → 核心动态、技术要点、行业影响、值得关注的信号
+✔ 通用 → 核心内容、关键要点、价值与启发
+
+**原文：** <链接>
 ```
 
 **详见：** [skills/docai-web2summary/README.md](skills/docai-web2summary/README.md) | [使用指南](skills/docai-web2summary/SKILL.md)

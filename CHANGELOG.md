@@ -1,5 +1,63 @@
 # 更新日志
 
+## 2026-02-20 - v1.1.0: 架构优化 & 自适应总结
+
+### 并行获取加速
+
+**修改文件**: `skills/docai-web2md/tools/convert.py`
+
+将串行级联（Jina → Firecrawl → Python）改为 `ThreadPoolExecutor` 并行发起，取最快成功的结果。
+
+**性能提升**：
+- Jina 失败时：17-20s → 2-5s
+- 全部失败时：75s → ~15s
+- 超时值全面缩短（Jina 15→8s, Firecrawl 30→10s, requests 30→15s）
+
+### Bug 修复与安全加固
+
+- 裸 `except:` → `except Exception:`，避免捕获 KeyboardInterrupt
+- `_to_plain_text` 添加 None 守卫，防止无 body 时崩溃
+- `requests.Session` 添加上下文管理器，防止连接泄漏
+- `"python"` → `sys.executable`，修复虚拟环境下 subprocess 调用
+- 删除重复的 `h1#activity-name` 选择器
+- 删除未使用的 `run_ai_summary()` 方法和 `output` 参数
+
+### 健壮性提升
+
+- URL 入口校验（scheme + netloc）
+- HTTPAdapter 重试策略（429/5xx，最多 2 次，指数退避）
+- PDF 检测同时检查 Content-Type 和 URL 后缀
+- AI 总结前内容截断保护（上限 100,000 字符）
+- PDF 处理合并为 `_process_pdf()`，只打开一次文档
+
+### 代码质量
+
+- `print(stderr)` 全部替换为 `logging` 模块
+- `_needs_browser` 拆分为 `_is_known_dynamic_site`（纯函数）+ `_probe_for_spa`（网络调用）
+- 总结 prompt 提取到 `prompts/summary_prompt.txt` 模板文件
+
+### 自适应总结结构
+
+**修改文件**: `skills/docai-web2summary/tools/prompts/summary_prompt.txt`
+
+总结 prompt 从固定结构改为 AI 自判断内容类型，根据类型选择对应的总结结构：
+
+| 类型 | 适用场景 |
+|------|---------|
+| 技术论文/研究 | arXiv、技术博客、算法介绍 |
+| 新闻报道 | 行业新闻、公司动态、政策发布 |
+| 教程/指南 | 编程教程、How-to、最佳实践 |
+| 产品发布/评测 | 产品发布、功能更新、工具推荐 |
+| AI 行业动态 | AI Newsletter、模型发布、趋势分析 |
+| 通用 | 博客、随笔、访谈、其他 |
+
+### 测试与 CI
+
+- 新增 `tests/` 目录，37 个单元测试
+- 新增 `.github/workflows/ci.yml`：ruff + black + pytest（Python 3.11/3.12）
+
+---
+
 ## 2026-01-11 - v1.0.2: 微信公众号特殊处理 & Skill 定义优化
 
 ### 微信公众号特殊处理
