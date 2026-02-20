@@ -1,68 +1,54 @@
 ---
 name: docai-web2md
-description: Use when needing to convert web pages to Markdown format. Uses parallel approach (Jina Reader / Firecrawl / Python simultaneously) to handle static blogs, dynamic pages, social media, and arXiv papers.
+description: Convert any web URL to Markdown. Triggers on "转成Markdown/转换/网页转Markdown/convert to Markdown + URL". Handles static sites, dynamic SPAs, WeChat, arXiv, Twitter/X.
 ---
 
 # docai:web2md
 
-## Overview
-Converts web pages to Markdown with parallel method execution:
-- **Jina Reader API** (fastest, zero install)
-- **Firecrawl API** (advanced crawling)
-- **Python fallback** (when APIs unavailable)
+## When to Trigger
+User wants to convert a web page to Markdown. Common patterns:
+- "把这个链接转成 Markdown"、"网页转 Markdown"、"提取网页内容"
+- "convert this URL to Markdown"、"get the content of this page"
+- Any URL + intent to extract/read content (without summarization)
 
-All three methods run in parallel, returning the first successful result.
+If user wants summary, use docai-web2summary instead.
 
-**Special handling**: WeChat articles → Python directly (best results)
-
-**Use when**: User says "convert to Markdown", "转成 Markdown", "网页转 Markdown"
-
-## Quick Action (For Claude Code)
-When user provides a URL to convert:
+## How to Execute
 ```bash
-# Method 1: Jina Reader (recommended - no install)
-curl https://r.jina.ai/<URL>
-
-# Method 2: Python script (if Jina unavailable)
-python skills/docai-web2md/tools/convert.py <URL>
+python skills/docai-web2md/tools/convert.py <URL> [--use-python] [-o <file>]
 ```
 
-## Prerequisites (Python Method Only)
+### Parameters
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `url` | Yes | Web page URL |
+| `--use-python` | No | Force Python method (skip Jina/Firecrawl) |
+| `-o` / `--output` | No | Save to file instead of stdout |
+
+### Examples
 ```bash
-# Option 1: uv (recommended)
-uv pip install --system requests beautifulsoup4 markdownify pymupdf
+# Basic conversion (parallel: Jina / Firecrawl / Python)
+python skills/docai-web2md/tools/convert.py https://example.com/article
 
-# Option 2: pip
-pip install requests beautifulsoup4 markdownify pymupdf
-```
-
-## Usage Examples
-```bash
-# Basic conversion
-python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering
-
-# Save to file
-python skills/docai-web2md/tools/convert.py https://www.breezedeus.com/article/ai-agent-context-engineering -o article.md
-
-# arXiv paper (auto HTML priority)
+# arXiv paper (auto HTML priority, PDF fallback)
 python skills/docai-web2md/tools/convert.py https://arxiv.org/abs/2601.04500v1
 
+# Save to file
+python skills/docai-web2md/tools/convert.py https://mp.weixin.qq.com/s/... -o article.md
+
 # Force Python method
-python skills/docai-web2md/tools/convert.py <URL> --use-python
+python skills/docai-web2md/tools/convert.py https://example.com --use-python
 ```
 
-## Supported Platforms
-- ✅ Static blogs & documentation (Jina/Python)
-- ✅ React/Vue dynamic pages (Python)
-- ✅ WeChat articles (微信公众号) - Python direct
-- ✅ X.com / Twitter (Python)
-- ✅ arXiv papers (HTML → PDF fallback)
-- ✅ Medium/Substack (Python)
+## What It Does
+Three methods run in parallel, returning the first successful result:
+1. Jina Reader API (fastest, zero install)
+2. Firecrawl API (if key configured)
+3. Python fallback (requests + BeautifulSoup + Playwright for SPAs)
 
-## Common Issues
-- **Missing dependencies**: Install with `uv pip install --system requests beautifulsoup4 markdownify pymupdf`
-- **arXiv PDF**: Requires `pymupdf` for PDF extraction
-- **Dynamic pages**: May need Python method if Jina fails
+Special cases handled automatically: WeChat → Python direct, arXiv → HTML priority, Twitter/X → Playwright.
 
-## Related
-- **docai-web2summary**: For AI-powered summaries (conversion + analysis)
+## Troubleshooting
+- **arXiv PDF garbled**: Requires `pymupdf` — `pip install pymupdf`
+- **Dynamic page empty**: Script auto-detects SPAs and uses Playwright
+- **All methods fail**: Try `--use-python` to bypass API methods

@@ -1,8 +1,8 @@
 {
   "name": "docai-web2summary",
   "title": "Web to Summary",
-  "description": "Convert web pages to structured summaries using AI. Automatically converts URLs to Markdown via docai-web2md, then generates structured summaries with core insights, technical details, and key metrics.",
-  "version": "1.0.0",
+  "description": "Summarize any web URL with adaptive structure. Auto-detects content type (paper, news, tutorial, product, AI news, general) and generates type-specific summaries via parallel Markdown conversion + AI.",
+  "version": "1.1.0",
   "author": "DocAI",
   "license": "MIT",
   "categories": ["content", "summarization", "web", "ai"],
