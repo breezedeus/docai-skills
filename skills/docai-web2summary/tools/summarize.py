@@ -15,7 +15,6 @@ URL 内容总结工具
 import sys
 import argparse
 import logging
-import os
 import subprocess
 from pathlib import Path
 
