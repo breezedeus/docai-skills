@@ -56,39 +56,26 @@ pip install requests beautifulsoup4 markdownify pymupdf
 
 ### docai:web2summary - 网页智能总结
 
-基于 `docai-web2md` 的网页转换能力，结合 AI 生成结构化深度总结。
+基于 `docai-web2md` 获取网页内容，由 AI 直接完成结构化总结。
 
-**核心功能：**
-- 🔄 自动转换网页为 Markdown
-- 🤖 AI 自动判断内容类型，生成对应结构的总结
-- 📋 支持六种内容类型：技术论文、新闻报道、教程指南、产品评测、AI 动态、通用
-- 💾 支持直接保存到文件
+**工作流程：**
+1. 调用 `docai-web2md` 将 URL 转为 Markdown
+2. AI 自动判断内容类型，按规范输出深度总结
+3. 可选：使用 [info-card-designer](https://github.com/joeseesun/info-card-designer) 生成信息卡图片
 
 **使用：**
-```bash
-# 基本总结
-python skills/docai-web2summary/tools/summarize.py https://mp.weixin.qq.com/s/...
-
-# 指定模型并保存
-python skills/docai-web2summary/tools/summarize.py https://arxiv.org/abs/2601.04500v1 --model sonnet -o summary.md
+```
+帮我总结这个链接：https://arxiv.org/abs/2601.04500v1
+总结 https://mp.weixin.qq.com/s/...
 ```
 
-**输出格式（根据内容类型自适应）：**
-```
-# **标题 | 机构名称**
-
-✔ 一句话总结
-
-（以下章节根据内容类型自动选择）
-✔ 技术论文 → 核心洞见、技术细节、性能数据、应用场景、长期意义
-✔ 新闻报道 → 核心事件、关键人物/机构、背景与影响、后续展望
-✔ 教程指南 → 学习目标、前置条件、关键步骤、注意事项
-✔ 产品评测 → 产品定位、核心功能、竞品对比、适用人群
-✔ AI 动态 → 核心动态、技术要点、行业影响、值得关注的信号
-✔ 通用 → 核心内容、关键要点、价值与启发
-
-**原文：** <链接>
-```
+**支持六种内容类型（自动判断）：**
+- 🔬 技术论文 → 核心洞见、技术细节、性能数据、应用场景、长期意义
+- 📰 新闻报道 → 核心事件、关键人物/机构、背景与影响、后续展望
+- 📚 教程指南 → 学习目标、前置条件、关键步骤、注意事项
+- 🚀 产品评测 → 产品定位、核心功能、竞品对比、适用人群
+- 🤖 AI 动态 → 核心动态、技术要点、行业影响、值得关注的信号
+- 📄 通用 → 核心内容、关键要点、价值与启发
 
 **详见：** [skills/docai-web2summary/README.md](skills/docai-web2summary/README.md) | [使用指南](skills/docai-web2summary/SKILL.md)
 

@@ -20,11 +20,8 @@ docai-skills/
     │       └── __init__.py
     │
     └── docai-web2summary/              # Skill 2: 网页智能总结
-        ├── SKILL.md                   # ⭐ Claude Code Skill 定义
-        ├── README.md                  # 使用说明
-        └── tools/
-            ├── summarize.py           # 总结工具实现
-            └── __init__.py
+        ├── SKILL.md                   # ⭐ Claude Code Skill 定义（含总结规范）
+        └── README.md                  # 使用说明
 ```
 
 ## 核心文件说明
