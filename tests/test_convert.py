@@ -96,6 +96,49 @@ class TestCleanJinaMarkdown:
         assert result == "hello"
 
 
+class TestTryJinaReader:
+    """测试 Jina Reader 调用顺序"""
+
+    def test_prefers_r_jinaai_cn(self):
+        converter = WebToMarkdown()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.text = (
+            "# result from preferred endpoint\n\n"
+            "This response body is intentionally long enough to pass the current check."
+        )
+        converter.session.get = MagicMock(return_value=response)
+
+        result = converter._try_jina_reader("https://example.com/article", False)
+
+        assert result.startswith("# result from preferred endpoint")
+        assert converter.session.get.call_args_list[0].args[0].startswith(
+            "https://r.jinaai.cn/"
+        )
+
+    def test_falls_back_to_r_jina_ai(self):
+        converter = WebToMarkdown()
+        preferred_error = Exception("preferred endpoint unavailable")
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.text = (
+            "# result from fallback endpoint\n\n"
+            "This response body is intentionally long enough to pass the current check."
+        )
+
+        converter.session.get = MagicMock(side_effect=[preferred_error, response])
+
+        result = converter._try_jina_reader("https://example.com/article", False)
+
+        assert result.startswith("# result from fallback endpoint")
+        assert converter.session.get.call_args_list[0].args[0].startswith(
+            "https://r.jinaai.cn/"
+        )
+        assert converter.session.get.call_args_list[1].args[0].startswith(
+            "https://r.jina.ai/"
+        )
+
+
 class TestURLValidation:
     """测试 URL 校验"""
 
