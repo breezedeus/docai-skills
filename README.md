@@ -118,6 +118,9 @@ uv sync
 # 4. 执行脚本（方式 A：使用 uv run）
 uv run python skills/docai-web2md/tools/convert.py https://example.com
 
+# 4.1 启用 pre-commit hook
+uv run pre-commit install
+
 # 5. 或激活环境后执行（方式 B）
 source .venv/bin/activate
 python skills/docai-web2md/tools/convert.py https://example.com
