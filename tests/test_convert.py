@@ -342,7 +342,9 @@ class TestWechatRouting:
         assert result == "# 微信文章"
 
     @patch.object(WebToMarkdown, "_try_wespy", return_value=None)
-    @patch.object(WebToMarkdown, "_try_playwright", return_value="# Playwright fallback")
+    @patch.object(
+        WebToMarkdown, "_try_playwright", return_value="# Playwright fallback"
+    )
     def test_wechat_falls_back_to_playwright(self, mock_playwright, mock_wespy):
         converter = WebToMarkdown()
         result = converter.convert("https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA")

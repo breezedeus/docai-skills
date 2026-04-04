@@ -112,7 +112,7 @@ class WebToMarkdown:
             if result:
                 return result
             return self._python_convert(url, pure_text)
-            
+
         # 推特 X.com 特殊处理：如果URL是twitter/x.com，转换为fxtwitter/fixupx以获取元数据渲染的内容
         if self._is_twitter(url):
             url = self._convert_twitter_to_proxy(url)
@@ -332,7 +332,7 @@ class WebToMarkdown:
         """转换 Twitter/X URL 到支持元数据预览的 fxtwitter 或 fixupx"""
         parsed = urlparse(url)
         netloc = parsed.netloc.lower()
-        
+
         # 将 twitter.com 替换为 fxtwitter.com, x.com 替换为 fixupx.com
         if "twitter.com" in netloc:
             new_netloc = netloc.replace("twitter.com", "fxtwitter.com")
@@ -340,7 +340,7 @@ class WebToMarkdown:
             new_netloc = netloc.replace("x.com", "fixupx.com")
         else:
             return url
-            
+
         return url.replace(netloc, new_netloc)
 
     def _is_arxiv(self, url):
