@@ -1,5 +1,20 @@
 # 更新日志
 
+## 2026-04-04 - v1.3.0: Jina Reader 优先域名切换
+
+### Jina Reader 优先域名调整
+
+**修改文件**: `skills/docai-web2md/tools/convert.py`
+
+Jina Reader 优先使用 `https://r.jinaai.cn`，如果不可用则自动回退到原来的 `https://r.jina.ai`。
+
+### 测试
+
+- 新增单元测试覆盖首选域名和回退路径
+- 定向测试通过
+
+---
+
 ## 2026-02-20 - v1.2.0: 新增 Playwright 并行方法 & 微信公众号优化
 
 ### Playwright 作为第四并行获取方法

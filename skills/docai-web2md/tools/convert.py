@@ -152,17 +152,22 @@ class WebToMarkdown:
 
         用法: https://r.jina.ai/https://www.breezedeus.com/article/ai-agent-context-engineering
         """
+        jina_base_urls = ["https://r.jinaai.cn", "https://r.jina.ai"]
         try:
-            jina_url = f"https://r.jina.ai/{url}"
-            response = self.session.get(jina_url, timeout=self.TIMEOUT_JINA)
-            response.raise_for_status()
+            for jina_base_url in jina_base_urls:
+                jina_url = f"{jina_base_url}/{url}"
+                try:
+                    response = self.session.get(jina_url, timeout=self.TIMEOUT_JINA)
+                    response.raise_for_status()
 
-            content = response.text
-            if content and len(content.strip()) > 50:  # 验证有内容
-                if pure_text:
-                    return content
-                # Jina 已经返回不错的 Markdown，稍作清理即可
-                return self._clean_jina_markdown(content)
+                    content = response.text
+                    if content and len(content.strip()) > 50:  # 验证有内容
+                        if pure_text:
+                            return content
+                        # Jina 已经返回不错的 Markdown，稍作清理即可
+                        return self._clean_jina_markdown(content)
+                except Exception as e:
+                    logger.warning("Jina Reader 失败 (%s): %s", jina_base_url, e)
         except Exception as e:
             logger.warning("Jina Reader 失败: %s", e)
         return None
