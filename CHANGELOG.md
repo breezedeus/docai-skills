@@ -1,5 +1,28 @@
 # 更新日志
 
+## 2026-04-04 - v1.4.0: web2summary 架构重构
+
+### docai-web2summary 重构为纯 Skill 模式
+
+**移除文件**：
+- `skills/docai-web2summary/tools/` 整个目录（`summarize.py`、`image_generator.py`、`prompts/`、`templates/`）
+- `skills/docai-web2summary/skill.json`
+
+**核心变化**：
+
+| 之前 | 之后 |
+|------|------|
+| SKILL.md 调用 Python 脚本 | SKILL.md 直接内嵌总结规范 |
+| Python 脚本再调 `claude` CLI | AI agent 自己完成总结 |
+| 绑定 Claude 环境 | 兼容任意 AI 环境 |
+| 内置 HTML 模板渲染卡片 | 可选接入 info-card-designer |
+
+**不再依赖**：`claude` CLI、`openai`/`anthropic`/`google-generativeai` SDK
+
+**信息卡生成**：改用外部 skill [info-card-designer](https://github.com/joeseesun/info-card-designer)
+
+---
+
 ## 2026-04-04 - v1.3.0: Jina Reader 优先域名切换
 
 ### Jina Reader 优先域名调整

@@ -1,6 +1,6 @@
 [project]
 name = "docai-skills"
-version = "1.3.0"
+version = "1.4.0"
 description = "DocAI Skills Marketplace - Collection of document AI skills"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -10,6 +10,7 @@ dependencies = [
     "markdownify>=0.11.6",
     "playwright>=1.40.0",
     "pymupdf>=1.23.0",
+    "wespy>=0.2.0",
 ]
 
 [build-system]

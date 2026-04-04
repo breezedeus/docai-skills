@@ -12,35 +12,157 @@ User wants to summarize a web page. Common patterns:
 - Any URL + intent to understand/extract key points
 
 ## How to Execute
+
+### Step 1 — 获取网页内容
+使用 `docai-web2md` skill 将 URL 转换为 Markdown：
 ```bash
-# The script is relative to this skill's directory
-python skills/docai-web2summary/tools/summarize.py <URL> [--model <model>] [--output <file>]
+python skills/docai-web2md/tools/convert.py <URL>
 ```
 
-### Parameters
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `url` | Yes | Web page URL |
-| `--model` | No | AI model (sonnet, haiku, etc.) |
-| `--output` | No | Save to file instead of stdout |
+### Step 2 — 直接总结（你来做，无需调用外部 AI）
+拿到 Markdown 内容后，**你（AI agent）直接按照下方的总结规范输出总结**，不需要再调用任何脚本或 API。
 
-### Examples
-```bash
-# arXiv paper
-python skills/docai-web2summary/tools/summarize.py https://arxiv.org/abs/2601.04500v1
+### Step 3 — 生成信息卡片（可选）
+如果用户需要信息卡图片，使用 [info-card-designer](https://github.com/joeseesun/info-card-designer) skill 生成。
 
-# WeChat article, save to file
-python skills/docai-web2summary/tools/summarize.py https://mp.weixin.qq.com/s/... -o summary.md
+---
 
-# Blog post with specific model
-python skills/docai-web2summary/tools/summarize.py https://example.com/post --model sonnet
-```
+## 总结规范
 
-## What It Does
-1. Converts URL → Markdown (parallel: Jina / Firecrawl / Python)
-2. AI auto-detects content type and applies matching summary structure
-3. Returns formatted Markdown summary
+### 格式要求
 
-## Troubleshooting
-- **AI unavailable**: Falls back to outputting the prompt for manual use
-- **Conversion fails**: Auto-retries with Python fallback method
+**标题格式**
+- 所有级别标题都必须加粗：`# **标题**`、`## **标题**`、`### **标题**`
+- 如内容来自知名机构，一级标题末尾标注：`# **标题内容 | 机构名称**`
+- 标题与前面内容之间空一行
+
+**加粗与标点**
+- 加粗标记 `**` 在标点符号内部，不在外部
+- ✅ `「**更聪明地激活**」`　❌ `**「更聪明地激活」**`
+
+**链接处理**
+- 末尾必须包含原文链接：`**原文：** <链接>`
+- 删除 URL 中 `?` 后的查询参数
+
+**列表格式**
+- 无序列表用 ✔ 代替 `-` / `*`，每条后空一行
+
+**内容约束**
+- 只基于网页中的信息，禁止自行推断
+- 不输出 LaTeX 数学公式，不包含索引或引用
+
+---
+
+### 内容类型判断与结构
+
+先判断内容类型，再按对应结构输出。
+
+---
+
+#### 🔬 类型A：技术论文/研究
+适用：学术论文、技术报告、arXiv 论文、算法介绍等
+
+结构（整体不超过 1000 字，没有的章节直接删除）：
+✔ 一句话总结（开篇）：体现研究的核心突破，必须有吸引力
+
+✔ 核心洞见：解决了什么问题？提出了什么新思路？
+
+✔ 技术细节/架构创新：关键方法、模型结构、算法设计
+
+✔ 性能数据/实验结果：量化指标、对比基线、关键数据
+
+✔ 应用场景：这项技术能用在哪里？
+
+✔ 长期意义：为什么值得关注？对领域的影响
+
+✔ 原文链接（末尾）
+
+---
+
+#### 📰 类型B：新闻报道
+适用：行业新闻、公司动态、政策发布、事件报道等
+
+结构（整体不超过 800 字，没有的章节直接删除）：
+✔ 一句话总结（开篇）：概括核心事件，突出新闻价值
+
+✔ 核心事件：发生了什么？关键细节
+
+✔ 关键人物/机构：谁在推动？谁受影响？
+
+✔ 背景与影响：为什么重要？对行业/社会的影响
+
+✔ 后续展望：接下来可能发生什么？
+
+✔ 原文链接（末尾）
+
+---
+
+#### 📚 类型C：教程/指南
+适用：编程教程、操作指南、How-to 文章、最佳实践等
+
+结构（整体不超过 1000 字，没有的章节直接删除）：
+✔ 一句话总结（开篇）：这篇教程教你什么？适合谁？
+
+✔ 学习目标：读完能掌握什么？
+
+✔ 前置条件：需要什么基础或工具？
+
+✔ 关键步骤摘要：核心流程的精炼提取（不是逐步复述）
+
+✔ 注意事项/常见坑：作者提到的易错点或最佳实践
+
+✔ 原文链接（末尾）
+
+---
+
+#### 🚀 类型D：产品发布/评测
+适用：产品发布、功能更新、产品评测、工具推荐等
+
+结构（整体不超过 800 字，没有的章节直接删除）：
+✔ 一句话总结（开篇）：核心卖点
+
+✔ 产品定位：解决什么问题？面向谁？
+
+✔ 核心功能/亮点：最值得关注的特性
+
+✔ 与竞品对比：相比现有方案有什么优势？（如文中提及）
+
+✔ 适用人群：谁最应该关注？
+
+✔ 价格/获取方式：如何获取或使用？（如文中提及）
+
+✔ 原文链接（末尾）
+
+---
+
+#### 🤖 类型E：AI 行业动态
+适用：AI 领域新闻汇总、模型发布、行业趋势分析、AI Newsletter 等
+
+结构（整体不超过 1000 字，没有的章节直接删除）：
+✔ 一句话总结（开篇）：本期最值得关注的信号
+
+✔ 核心动态：最重要的 2-3 条消息及其意义
+
+✔ 技术要点：涉及的关键技术或方法（如有）
+
+✔ 行业影响：对开发者/企业/用户意味着什么？
+
+✔ 值得关注的信号：哪些趋势正在形成？
+
+✔ 原文链接（末尾）
+
+---
+
+#### 📄 类型F：通用
+适用：个人博客、观点文章、随笔、访谈、其他类型
+
+结构（整体不超过 800 字，没有的章节直接删除）：
+✔ 一句话总结（开篇）：这篇内容的核心价值
+
+✔ 核心内容：作者在说什么？主要观点或故事
+
+✔ 关键要点：最值得记住的 2-3 个点
+
+✔ 价值与启发：读完能获得什么？
+
+✔ 原文链接（末尾）
