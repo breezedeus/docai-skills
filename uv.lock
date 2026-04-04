@@ -183,6 +183,7 @@ dependencies = [
     { name = "playwright" },
     { name = "pymupdf" },
     { name = "requests" },
+    { name = "wespy" },
 ]
 
 [package.dev-dependencies]
@@ -200,6 +201,7 @@ requires-dist = [
     { name = "playwright", specifier = ">=1.40.0" },
     { name = "pymupdf", specifier = ">=1.23.0" },
     { name = "requests", specifier = ">=2.31.0" },
+    { name = "wespy", specifier = ">=0.2.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -614,4 +616,17 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/aa/92/58199fe10049f9703c2666e809c4f686c54ef0a68b0f6afccf518c0b1eb9/virtualenv-21.2.0.tar.gz", hash = "sha256:1720dc3a62ef5b443092e3f499228599045d7fea4c79199770499df8becf9098", size = 5840618, upload-time = "2026-03-09T17:24:38.013Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c6/59/7d02447a55b2e55755011a647479041bc92a82e143f96a8195cb33bd0a1c/virtualenv-21.2.0-py3-none-any.whl", hash = "sha256:1bd755b504931164a5a496d217c014d098426cddc79363ad66ac78125f9d908f", size = 5825084, upload-time = "2026-03-09T17:24:35.378Z" },
+]
+
+[[package]]
+name = "wespy"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cc/6f/a27abcb99304ab2c14271f76f33404923407769d422df88f7810724bc441/wespy-0.2.0.tar.gz", hash = "sha256:93757511f6cb84ff26794ff108edda98039b8cec9e88abeabc1c3b8ca2ffabae", size = 23178, upload-time = "2025-11-24T02:26:18.203Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/df/a7/d9313c92b27e1dc56f861c5c1a5fe0aa58f462850008ccd11c2b83879045/wespy-0.2.0-py3-none-any.whl", hash = "sha256:59689f125b3b24d4f142dfa9e87e9baf5b1a2391d0db84cc773c3ceea20f2124", size = 20693, upload-time = "2025-11-24T02:26:16.687Z" },
 ]

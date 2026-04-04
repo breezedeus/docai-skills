@@ -12,6 +12,11 @@ arXiv 特殊处理：
 - 转换为: https://arxiv.org/html/2601.04500v1
 - 优先 Jina Reader，失败则 Python 下载 PDF
 
+微信公众号特殊处理：
+- 优先 WeSpy
+- 失败则回退 Playwright
+- 最后回退 Python 方法
+
 用法:
     python convert.py <url> [--pure-text] [--output <file>]
 
@@ -24,11 +29,13 @@ arXiv 特殊处理：
 import sys
 import argparse
 import logging
+from pathlib import Path
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
+import tempfile
 from urllib.parse import urlparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
@@ -96,12 +103,19 @@ class WebToMarkdown:
         if self._is_arxiv(url):
             url = self._convert_arxiv_to_html(url)
 
-        # 微信公众号：优先使用 Playwright（需要 JS 渲染），失败则回退 Python 方法
+        # 微信公众号：优先使用 WeSpy，失败则回退到 Playwright / Python
         if self._is_wechat(url):
+            result = self._try_wespy(url, pure_text)
+            if result:
+                return result
             result = self._try_playwright(url, pure_text)
             if result:
                 return result
             return self._python_convert(url, pure_text)
+            
+        # 推特 X.com 特殊处理：如果URL是twitter/x.com，转换为fxtwitter/fixupx以获取元数据渲染的内容
+        if self._is_twitter(url):
+            url = self._convert_twitter_to_proxy(url)
 
         # 强制 Python 模式
         if use_python:
@@ -213,6 +227,38 @@ class WebToMarkdown:
             logger.warning("Playwright 失败: %s", e)
         return None
 
+    def _try_wespy(self, url, pure_text):
+        """尝试使用 WeSpy 获取微信公众号内容"""
+        try:
+            from wespy import ArticleFetcher
+        except ImportError as e:
+            logger.warning("WeSpy 未安装: %s", e)
+            return None
+
+        try:
+            fetcher = ArticleFetcher()
+            with tempfile.TemporaryDirectory() as output_dir:
+                article_info = fetcher.fetch_article(
+                    url=url,
+                    output_dir=output_dir,
+                    save_markdown=True,
+                    save_html=False,
+                    save_json=False,
+                )
+                if not article_info:
+                    return None
+
+                markdown = self._read_wespy_markdown(output_dir, article_info)
+                if not markdown:
+                    return None
+
+                if pure_text:
+                    return self._markdown_to_plain_text(markdown)
+                return markdown.strip()
+        except Exception as e:
+            logger.warning("WeSpy 失败: %s", e)
+        return None
+
     def _python_convert(self, url, pure_text):
         """Python实现（回退方法）"""
         # 自动检测是否需要浏览器
@@ -251,6 +297,51 @@ class WebToMarkdown:
         # 移除行尾空格
         markdown = re.sub(r" +\n", "\n", markdown)
         return markdown.strip()
+
+    def _markdown_to_plain_text(self, markdown):
+        """从 Markdown 提取纯文本"""
+        text = re.sub(r"!\[[^\]]*\]\([^\)]*\)", "", markdown)
+        text = re.sub(r"\[([^\]]+)\]\([^\)]*\)", r"\1", text)
+        text = re.sub(r"^#{1,6}\s*", "", text, flags=re.MULTILINE)
+        text = re.sub(r"^[>*-]\s*", "", text, flags=re.MULTILINE)
+        text = re.sub(r"[`*_~]", "", text)
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        return text.strip()
+
+    def _read_wespy_markdown(self, output_dir, article_info):
+        """从 WeSpy 输出目录或返回值读取 Markdown"""
+        if isinstance(article_info, dict):
+            for key in ("markdown", "markdown_content", "content"):
+                value = article_info.get(key)
+                if isinstance(value, str) and value.strip():
+                    return value.strip()
+
+        markdown_files = sorted(Path(output_dir).rglob("*.md"))
+        if not markdown_files:
+            return None
+
+        return markdown_files[0].read_text(encoding="utf-8").strip()
+
+    def _is_twitter(self, url):
+        """检查是否是推特/X URL"""
+        parsed = urlparse(url)
+        netloc = parsed.netloc.lower()
+        return "twitter.com" in netloc or "x.com" in netloc
+
+    def _convert_twitter_to_proxy(self, url):
+        """转换 Twitter/X URL 到支持元数据预览的 fxtwitter 或 fixupx"""
+        parsed = urlparse(url)
+        netloc = parsed.netloc.lower()
+        
+        # 将 twitter.com 替换为 fxtwitter.com, x.com 替换为 fixupx.com
+        if "twitter.com" in netloc:
+            new_netloc = netloc.replace("twitter.com", "fxtwitter.com")
+        elif "x.com" in netloc:
+            new_netloc = netloc.replace("x.com", "fixupx.com")
+        else:
+            return url
+            
+        return url.replace(netloc, new_netloc)
 
     def _is_arxiv(self, url):
         """检测是否为 arXiv 链接"""

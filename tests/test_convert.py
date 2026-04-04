@@ -329,21 +329,36 @@ class TestTryPlaywright:
         assert result is None
 
 
-class TestWechatPlaywright:
-    """测试微信公众号使用 Playwright"""
+class TestWechatRouting:
+    """测试微信公众号优先级路由"""
 
-    @patch.object(WebToMarkdown, "_try_playwright", return_value="# 微信文章")
-    def test_wechat_uses_playwright(self, mock_playwright):
+    @patch.object(WebToMarkdown, "_try_wespy", return_value="# 微信文章")
+    @patch.object(WebToMarkdown, "_try_playwright")
+    def test_wechat_prefers_wespy(self, mock_playwright, mock_wespy):
         converter = WebToMarkdown()
         result = converter.convert("https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA")
-        mock_playwright.assert_called_once()
+        mock_wespy.assert_called_once()
+        mock_playwright.assert_not_called()
         assert result == "# 微信文章"
 
-    @patch.object(WebToMarkdown, "_try_playwright", return_value=None)
-    @patch.object(WebToMarkdown, "_python_convert", return_value="# Python fallback")
-    def test_wechat_falls_back_to_python(self, mock_python, mock_playwright):
+    @patch.object(WebToMarkdown, "_try_wespy", return_value=None)
+    @patch.object(WebToMarkdown, "_try_playwright", return_value="# Playwright fallback")
+    def test_wechat_falls_back_to_playwright(self, mock_playwright, mock_wespy):
         converter = WebToMarkdown()
         result = converter.convert("https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA")
+        mock_wespy.assert_called_once()
+        mock_playwright.assert_called_once()
+        assert result == "# Playwright fallback"
+
+    @patch.object(WebToMarkdown, "_try_wespy", return_value=None)
+    @patch.object(WebToMarkdown, "_try_playwright", return_value=None)
+    @patch.object(WebToMarkdown, "_python_convert", return_value="# Python fallback")
+    def test_wechat_falls_back_to_python(
+        self, mock_python, mock_playwright, mock_wespy
+    ):
+        converter = WebToMarkdown()
+        result = converter.convert("https://mp.weixin.qq.com/s/XClh6xJmXoXbyBC9lKzPdA")
+        mock_wespy.assert_called_once()
         mock_playwright.assert_called_once()
         mock_python.assert_called_once()
         assert result == "# Python fallback"
